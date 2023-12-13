@@ -21,11 +21,10 @@ function tableone(data, strata, vars;
         push!(strataids, Symbol(sn) => ids)
     end
     if addtotal 
-        insertcols!(table1, :Total => [ "" ]) 
-        push!(
-            strataids, 
-            :Total => findall(x -> !ismissing(x), getproperty(data, strata))
-        )
+        ids = findall(!ismissing, getproperty(data, strata))
+        n = length(ids)
+        insertcols!(table1, :Total => [ "$n" ]) 
+        push!(strataids, :Total => ids)
     end
     if addnmissing 
         ids = findall(ismissing, getproperty(data, strata))
