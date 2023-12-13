@@ -118,7 +118,7 @@ function binvariable(strata, stratanames, strataids, varvect, varname;
     end
     if addtotal 
         ids = strataids[:Total]
-        binvariable!(_t, varvect, levels, ids, "Total"; kwargs...)
+        binvariable!(_t, varvect, level, ids, "Total"; kwargs...)
     end
     if addnmissing addnmissing!(_t, varvect) end
     return _t
