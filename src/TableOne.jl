@@ -39,13 +39,13 @@ function tableone(data, strata, vars;
 end
 
 function tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
-        addnmissing, addtotal, kwargs...
+        kwargs...
     )
     for v ∈ vars
         append!(
                 table1, 
                 newvariable(data, strata, stratanames, strataids, v, binvars, catvars, npvars; 
-                    addnmissing, addtotal, kwargs...)
+                    kwargs...)
             )
     end
 end
@@ -65,7 +65,7 @@ function newvariable(data, strata, stratanames, strataids, v, binvars, catvars, 
 end
 
 function catvariable(strata, stratanames, strataids, varvect, varname; 
-        addnmissing = true, addtotal = true, kwargs...
+        addnmissing, addtotal, kwargs...
     )
     levels = skipmissing(unique(varvect))
     _t = DataFrame()
@@ -104,7 +104,7 @@ function catvariable!(estimates::Vector{String}, varvect, level, stratumids, tot
 end
 
 function binvariable(strata, stratanames, strataids, varvect, varname; 
-        addnmissing = true, addtotal = true, varnames = nothing, kwargs...
+        addnmissing, addtotal, varnames = nothing, kwargs...
     )
     level = maximum(skipmissing(unique(varvect)))
     _t = DataFrame()
@@ -169,7 +169,7 @@ function autovariable(strata, stratanames, strataids, varvect::Vector{<:String},
 end
 
 function contvariable(addfn, strata, stratanames, strataids, varvect, varname; 
-        addnmissing = true, addtotal = true, varnames = nothing, kwargs...
+        addnmissing, addtotal, varnames = nothing, kwargs...
     )
     _t = DataFrame()
     variablenames::Vector{String} = [ varname ]
