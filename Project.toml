@@ -1,9 +1,15 @@
 name = "TableOne"
 uuid = "d36ae967-72a8-4ff4-a661-f51e671fe83a"
-authors = ["Mark Pritchard"]
-version = "1.0.0-DEV"
+authors = ["Mark Pritchard <mark.pritchard@ndm.ox.ac.uk>"]
+version = "0.1.0-DEV"
+
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
+DataFrames = "1.6"
+StatsBase = "0.34"
 julia = "1"
 
 [extras]
