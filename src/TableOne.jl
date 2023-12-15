@@ -10,7 +10,59 @@ export tableone
 
 Produce a summary table which may be used as Table 1 in a manuscript.
 
-If `vars` is not supplied, defaults to use all variables in the dataset.
+## Arguments 
+* `data`: A `DataFrame` containing the data to be included in the table
+* `strata`: The variable (a column in `data`) by which the data should be stratified 
+    in the table
+* `vars`: The variables to be listed in the table, defaults to `Symbol.(names(data))` 
+    if not supplied
+
+# Keyword arguments
+
+## Types of variables 
+Each of these must be supplied as the same type as `vars`, e.g. if `vars` is a `Vector{Symbol}` 
+    then these should each be a `Vector{Symbol}`. Variables supplied to one of these 
+    arguments but not the main `vars` argument will not be displayed.
+* `binvars`: binary variables – variable will take one row and show `number (%)` 
+    with the selected level (see `binvardisplay` below)
+* `catvars`: categorical variables – each level in the variable will be shown on 
+    a separate line with the `number (%)` in that category
+* `npvars`: non-parametric variables – will display `median [1st–3rd quartiles]`
+
+Any variables not included in one of these arguments will be presented as 
+    `mean (standard deviation)` if the contents of the variable are 
+    `<:Union{<:Number, Missing}`, and as categorical otherwise.
+
+## Additional keyword arguments 
+* `addnmissing = true`: include the numer of records with missing values for each 
+    variable. If `true`, will also display number with missing `strata` values
+* `addtotal = false`: include a column of totals across all `strata`
+* `binvardisplay = nothing`: optionally, a `Dict` to choose the level to display 
+    for binary values. Any variables not listed will use the value chosen by `maximum(skipmissing(.))`
+* `varnames = nothing`: optionally, a `Dict` of names for variables different 
+    from the column titles in `data`, of the form `Dict(:columnname => "name to print")`. 
+    Any variables not included will be listed by the column name
+
+# Examples
+```jldoctest
+julia> using TableOne, CSV, DataFrames, Downloads
+# use the public PBC dataset
+julia> pbcdata = CSV.read(
+    Downloads.download("http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"),
+    DataFrame;
+    missingstring = "NA")
+julia> tableone(
+    pbcdata,
+    :trt,
+    [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema",
+        "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet",
+        "protime", "stage" ];
+    binvars = [ "sex", "ascites", "hepato", "spiders" ],
+    catvars = [ "status", "edema", "stage" ],
+    nparms = [ "bili", "chol", "copper", "alk.phos", "trig" ],
+    digits = 2,
+    binvardisplay = Dict("sex" => "f"))
+```
 """
 function tableone(data, strata, vars::Vector{S}; 
         binvars = S[ ], catvars = S[ ], npvars = S[ ], 
