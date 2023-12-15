@@ -13,7 +13,7 @@ Produce a summary table which may be used as Table 1 in a manuscript.
 If `vars` is not supplied, defaults to use all variables in the dataset.
 """
 function tableone(data, strata, vars::Vector{S}; 
-        binvars = S[], catvars = S[], npvars = S[], 
+        binvars = S[ ], catvars = S[ ], npvars = S[ ], 
         addnmissing = true, addtotal = false, kwargs...
     ) where S 
     stratanames = unique(getproperty(data, strata))
@@ -46,7 +46,7 @@ function tableone(data, strata, vars::Vector{S};
 end
 
 # In case only one variable is supplied, rather than a vector
-tableone(data, strata, var) = tableone(data, strata, [ var ])
+tableone(data, strata, var; kwargs...) = tableone(data, strata, [ var ]; kwargs...)
 
 # If `vars` is not supplied, defaults to use all variables in the dataset
 tableone(data, strata; kwargs...) = tableone(data, strata, Symbol.(names(data)); kwargs...)
