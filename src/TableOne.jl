@@ -23,11 +23,11 @@ Produce a summary table which may be used as Table 1 in a manuscript.
 Each of these must be supplied as the same type as `vars`, e.g. if `vars` is a `Vector{Symbol}` 
     then these should each be a `Vector{Symbol}`. Variables supplied to one of these 
     arguments but not the main `vars` argument will not be displayed.
-* `binvars`: binary variables – variable will take one row and show `number (%)` 
+* `binvars`: binary variables – variable will take one row and show **number (%)** 
     with the selected level (see `binvardisplay` below)
 * `catvars`: categorical variables – each level in the variable will be shown on 
-    a separate line with the `number (%)` in that category
-* `npvars`: non-parametric variables – will display `median [1st–3rd quartiles]`
+    a separate line with the **number (%)** in that category
+* `npvars`: non-parametric variables – will display **median [1st–3rd quartiles]**
 
 Any variables not included in one of these arguments will be presented as 
     `mean (standard deviation)` if the contents of the variable are 
@@ -46,11 +46,15 @@ Any variables not included in one of these arguments will be presented as
 # Examples
 ```jldoctest
 julia> using TableOne, CSV, DataFrames, Downloads
-# use the public PBC dataset
+
+julia> # use the public PBC dataset
+
 julia> pbcdata = CSV.read(
     Downloads.download("http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"),
     DataFrame;
     missingstring = "NA")
+[...]
+
 julia> tableone(
     pbcdata,
     :trt,
@@ -62,6 +66,39 @@ julia> tableone(
     nparms = [ "bili", "chol", "copper", "alk.phos", "trig" ],
     digits = 2,
     binvardisplay = Dict("sex" => "f"))
+29×4 DataFrame
+ Row │ variablenames        1                  2                  nmissing 
+     │ String               String             String             String   
+─────┼─────────────────────────────────────────────────────────────────────
+   1 │ n                    158                154                106
+   2 │ time: mean (sd)      2015.62 (1094.12)  1996.86 (1155.93)  0
+   3 │ status                                                     0
+   4 │     0                83 (52.53)         85 (55.19)
+   5 │     1                10 (6.33)          9 (5.84)
+   6 │     2                65 (41.14)         60 (38.96)
+   7 │ age: mean (sd)       51.42 (11.01)      48.58 (9.96)       0
+   8 │ sex: f               137 (86.71)        139 (90.26)        0
+   9 │ ascites: 1           14 (8.86)          10 (6.49)          106
+   10 │ hepato: 1            73 (46.2)          87 (56.49)         106
+   11 │ spiders: 1           45 (28.48)         45 (29.22)         106
+   12 │ edema                                                      0
+   13 │     0.0              132 (83.54)        131 (85.06)
+   14 │     0.5              16 (10.13)         13 (8.44)
+   15 │     1.0              10 (6.33)          10 (6.49)
+   16 │ bili: mean (sd)      2.87 (3.63)        3.65 (5.28)        0
+   17 │ chol: mean (sd)      365.01 (209.54)    373.88 (252.48)    134
+   18 │ albumin: mean (sd)   3.52 (0.44)        3.52 (0.4)         0
+   19 │ copper: mean (sd)    97.64 (90.59)      97.65 (80.49)      108
+   20 │ alk.phos: mean (sd)  2021.3 (2183.44)   1943.01 (2101.69)  106
+   21 │ ast: mean (sd)       120.21 (54.52)     124.97 (58.93)     106
+   22 │ trig: mean (sd)      124.14 (71.54)     125.25 (58.52)     136
+   23 │ platelet: mean (sd)  258.75 (100.32)    265.2 (90.73)      11
+   24 │ protime: mean (sd)   10.65 (0.85)       10.8 (1.14)        2
+   25 │ stage                                                      6
+   26 │     1                12 (7.59)          4 (2.6)
+   27 │     2                35 (22.15)         32 (20.78)
+   28 │     3                56 (35.44)         64 (41.56)
+   29 │     4                55 (34.81)         54 (35.06)
 ```
 """
 function tableone(data, strata, vars::Vector{S}; 

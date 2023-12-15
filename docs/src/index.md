@@ -1,4 +1,4 @@
-# TableOne.jl Documentation
+# TableOne.jl
 
 ```@docs
 tableone
