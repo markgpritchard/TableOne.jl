@@ -1,4 +1,6 @@
 
 using Documenter, TableOne
 
-makedocs(sitename="My Documentation")
+makedocs()
+
+deploydocs(repo = "github.com/markgpritchard/TableOne.jl.git")
