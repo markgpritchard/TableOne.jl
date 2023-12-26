@@ -42,7 +42,7 @@ Any variables not included in one of these arguments will be presented as
 * `digits = 1`: number of digits to be displayed after the decimal place in means, 
     standard deviations and percentages
 * `includemissingintotal = false`: include records with missing stratification variable 
-    in the totals column. This option has no effect if `addtotal = false`
+    in the totals column. This option has no effect if `addtotal == false`
 * `varnames = nothing`: optionally, a `Dict` of names for variables different 
     from the column titles in `data`, of the form `Dict(:columnname => "name to print")`. 
     Any variables not included will be listed by the column name
