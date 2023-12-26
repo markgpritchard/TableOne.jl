@@ -22,8 +22,6 @@ We use a publicly available Primary Biliary Cholangitis dataset to create an exa
 ```julia
 julia> using TableOne, CSV, DataFrames, Downloads
 
-julia> # use the public PBC dataset
-
 julia> pbcdata = CSV.read(
     Downloads.download("http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"),
     DataFrame;
