@@ -16,7 +16,7 @@ julia> using TableOne
 
 # Example use 
 
-The only exported function is `tableone`. Documentation for this function is available at [https://markgpritchard.github.io/TableOne.jl/].
+The only exported function is `tableone`. Documentation for this function is available at https://markgpritchard.github.io/TableOne.jl/.
 
 We use a publicly available Primary Biliary Cholangitis dataset to create an example Table 1.
 ```julia
