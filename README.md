@@ -9,7 +9,7 @@ Package to produce a summary table which may be used as Table 1 in a manuscript.
 ```julia
 julia> using Pkg
 
-julia> Pkg.add(url="https://github.com/markgpritchard/TableOne.jl")
+julia> Pkg.add("TableOne")
 
 julia> using TableOne
 ```
