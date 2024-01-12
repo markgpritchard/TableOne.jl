@@ -1,6 +1,7 @@
 # TableOne
 
 [![Build Status](https://github.com/markgpritchard/TableOne.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/markgpritchard/TableOne.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/markgpritchard/TableOne.jl/graph/badge.svg?token=2FWXZYCS0I)](https://codecov.io/gh/markgpritchard/TableOne.jl)
 
 Package to produce a summary table which may be used as Table 1 in a manuscript.
 
