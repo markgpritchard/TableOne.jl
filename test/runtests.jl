@@ -16,13 +16,13 @@ pbcdata = CSV.read(
 # Load saved versions that tests compare against
 include("modeldataframe.jl")
 
-@testset "Whole table" begin
+@testset "String variable names, 2 digits" begin
     # Note that our package does not currently provide p-values or have the `cramVars`
     # keyword. Also, we select `digits = 2`, which matches the R code for mean (sd)
     # results, but provides greater precision in our table than in the example.
     # We produce the table and compare it to a saved version that has been visually
     # compared to the R output.
-    testtable = tableone(
+    testtable_s2 = tableone(
         pbcdata,
         :trt,
         [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema", 
@@ -35,8 +35,36 @@ include("modeldataframe.jl")
         digits = 2, 
         binvardisplay = Dict("sex" => "f")
     )
-    # and a version using Symbols
-    testtable2 = tableone(
+    @testset "Compare column names to test data" begin
+        testtable_s2names = names(testtable_s2)
+        @testset for i ∈ eachindex(testtable_s2names)
+            @test testtable_s2names[i] == tablecolumnnames[i]
+        end
+    end
+    @testset "Compare variable names to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test testtable_s2.variablenames[i] == variablenames[i]
+        end
+    end
+    @testset "Compare trt = 1 to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test getproperty(testtable_s2, Symbol("1"))[i] == col1_2[i]
+        end
+    end
+    @testset "Compare trt = 2 to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test getproperty(testtable_s2, Symbol("2"))[i] == col2_2[i]
+        end
+    end
+end # @testset "String variable names, 2 digits"
+
+@testset "Symbol variable names, 2 digits" begin
+    # Note that our package does not currently provide p-values or have the `cramVars`
+    # keyword. Also, we select `digits = 2`, which matches the R code for mean (sd)
+    # results, but provides greater precision in our table than in the example.
+    # We produce the table and compare it to a saved version that has been visually
+    # compared to the R output.
+    testtable_y2 = tableone(
         pbcdata,
         :trt,
         [ :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema, 
@@ -49,27 +77,41 @@ include("modeldataframe.jl")
         digits = 2, 
         binvardisplay = Dict(:sex => "f")
     )  
-    @test testtable == testtable2
-    @test testtable == modeltesttable
-end # @testset "Whole table"
+    @testset "Compare column names to test data" begin
+        testtable_y2names = names(testtable_y2)
+        @testset for i ∈ eachindex(testtable_y2names)
+            @test testtable_y2names[i] == tablecolumnnames[i]
+        end
+    end
+    @testset "Compare variable names to test data" begin
+        @testset for i ∈ axes(testtable_y2, 1)
+            @test testtable_y2.variablenames[i] == variablenames[i]
+        end
+    end
+    @testset "Compare trt = 1 to test data" begin
+        @testset for i ∈ axes(testtable_y2, 1)
+            @test getproperty(testtable_y2, Symbol("1"))[i] == col1_2[i]
+        end
+    end
+    @testset "Compare trt = 2 to test data" begin
+        @testset for i ∈ axes(testtable_y2, 1)
+            @test getproperty(testtable_y2, Symbol("2"))[i] == col2_2[i]
+        end
+    end
+end # @testset "Symbol variable names, 2 digits"
 
-@testset "Add numbers missing" begin
+@testset "Numbers missing" begin
     # The top row of the table should show the number of records missing the stratification 
     # variable. All subsequent rows should exclude those records and show the numbers 
     # missing the variable described on that row. To test this, we use two separate 
     # datasets, one including all records and one excluding those with the stratification 
     # variable missing. All rows except the top one should be equal.
-    totaldata = CSV.read(
-        Downloads.download("http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"),
-        DataFrame; 
-        missingstring = "NA"
-    )
-    trtpresentdata = filter(:trt => x -> !ismissing(x), totaldata)
+    trtpresentdata = filter(:trt => x -> !ismissing(x), pbcdata)
     # Difference in size between these is the number with missing :trt
-    nmissingtrt = size(totaldata, 1) - size(trtpresentdata, 1)
+    nmissingtrt = size(pbcdata, 1) - size(trtpresentdata, 1)
 
-    testtable = tableone(
-        totaldata,
+    testtable_s2_nm = tableone(
+        pbcdata,
         :trt,
         [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema", 
             "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet", 
@@ -81,10 +123,32 @@ end # @testset "Whole table"
         digits = 2, 
         binvardisplay = Dict("sex" => "f")
     )
-    @test testtable.nmissing[1] == "$nmissingtrt"
+    @test testtable_s2_nm.nmissing[1] == "$nmissingtrt"
+    # Adding number missing should not have changed anything else in the table 
+    @testset "Compare column names to test data" begin
+        testtable_s2_nmnames = names(testtable_s2_nm)
+        @testset for i ∈ eachindex(testtable_s2_nmnames)
+            @test testtable_s2_nmnames[i] == tablecolumnnames_nm[i]
+        end
+    end
+    @testset "Compare variable names to test data" begin
+        @testset for i ∈ axes(testtable_s2_nm, 1)
+            @test testtable_s2_nm.variablenames[i] == variablenames[i]
+        end
+    end
+    @testset "Compare trt = 1 to test data" begin
+        @testset for i ∈ axes(testtable_s2_nm, 1)
+            @test getproperty(testtable_s2_nm, Symbol("1"))[i] == col1_2[i]
+        end
+    end
+    @testset "Compare trt = 2 to test data" begin
+        @testset for i ∈ axes(testtable_s2_nm, 1)
+            @test getproperty(testtable_s2_nm, Symbol("2"))[i] == col2_2[i]
+        end
+    end
 
     # The table made with trtpresentdata should have no records with missing :trt 
-    testtable2 = tableone(
+    testtable_pd2_nm = tableone(
         trtpresentdata,
         :trt,
         [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema", 
@@ -97,11 +161,19 @@ end # @testset "Whole table"
         digits = 2, 
         binvardisplay = Dict("sex" => "f")
     )
-    @test testtable2.nmissing[1] == ""
+    @test testtable_pd2_nm.nmissing[1] == ""
 
     # After the initial row, the two tables should be equal
-    for tt ∈ [ testtable, testtable2 ] filter!(:variablenames => x -> x != "n", tt) end 
-    @test testtable == testtable2
+    for tt ∈ [ testtable_s2_nm, testtable_pd2_nm ] 
+        filter!(:variablenames => x -> x != "n", tt) 
+    end 
+    @testset for col ∈ names(testtable_s2_nm) 
+        v_s2nm = getproperty(testtable_s2_nm, col)
+        v_pd2nm = getproperty(testtable_pd2_nm, col)
+        @testset for i ∈ axes(testtable_s2_nm, 1)
+            @test v_s2nm[i] == v_pd2nm[i]
+        end
+    end
 end # @testset "Add numbers missing"
 
 @testset "Add totals" begin
@@ -123,7 +195,9 @@ end # @testset "Add numbers missing"
             addtotal = true, 
             includemissingintotal = true
         )
-        @test testtable.Total == modelcol_includemissingintotal
+        @testset for i ∈ eachindex(modelcol_includemissingintotal)
+            @test testtable.Total[i] == modelcol_includemissingintotal[i]
+        end
     end # @testset "Include missing in total"
 
     @testset "Exclude missing in total" begin
@@ -144,7 +218,9 @@ end # @testset "Add numbers missing"
             binvardisplay = Dict("sex" => "f"), 
             addtotal = true
         )
-        @test testtable.Total == modelcol_excludemissingintotal
+        @testset for i ∈ eachindex(modelcol_excludemissingintotal)
+            @test testtable.Total[i] == modelcol_excludemissingintotal[i]
+        end
     end # @testset "Exclude missing in total"
     
 end # @testset "Add totals"
@@ -160,7 +236,13 @@ end # @testset "Add totals"
         addnmissing = false,
         digits = 2
     )
-    @test testtable == modelbinvartesttable
+    @testset for col ∈ names(testtable) 
+        v = getproperty(testtable, col)
+        mv = getproperty(modelbinvartesttable, col)
+        @testset for i ∈ axes(modelbinvartesttable, 1)
+            @test v[i] == mv[i]
+        end
+    end
 end # @testset "Binary variable display" 
 
 @testset "Specified variable names" begin
@@ -185,8 +267,51 @@ end # @testset "Binary variable display"
             "alk.phos" => "alkaline phosphotase"
         )
     )
-    @test testtable == modeltesttable2
+   # @test testtable == modeltesttable2
+    @testset for col ∈ names(testtable) 
+        v = getproperty(testtable, col)
+        mv = getproperty(modeltesttable2, col)
+        @testset for i ∈ axes(modeltesttable2, 1)
+            @test v[i] == mv[i]
+        end
+    end
 end # @testset "Specified variable names"
+
+@testset "Specified variable names" begin
+    # specify variable names for variables using `meanvariable`, `binvariable`, 
+    # `catvariable` and `npvariable`
+    testtable = tableone(
+        pbcdata,
+        :trt,
+        [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema",
+            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet",
+            "protime", "stage" ];
+        binvars = [ "sex", "ascites", "hepato", "spiders" ],
+        catvars = [ "status", "edema", "stage" ],
+        npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ],
+        addnmissing = false,
+        binvardisplay = Dict("sex" => "f"), 
+        digits = 2,
+        varnames = Dict(
+            "age" => "Age, years",
+            "hepato" => "Hepatomegaly",
+            "stage" => "Histologic stage",
+            "alk.phos" => "alkaline phosphotase"
+        )
+    )
+   # @test testtable == modeltesttable2
+    @testset for col ∈ names(testtable) 
+        v = getproperty(testtable, col)
+        mv = getproperty(modeltesttable2, col)
+        @testset for i ∈ axes(modeltesttable2, 1)
+            @test v[i] == mv[i]
+        end
+    end
+end # @testset "Specified variable names"
+
+@testset "Identify categorical variables automatically" begin
+    
+end # @testset "Identify categorical variables automatically" 
 
 @testset "Undefined keywords" begin
     # Any undefined keywords should generate an error
