@@ -309,8 +309,87 @@ end # @testset "Specified variable names"
     end
 end # @testset "Specified variable names"
 
+
+@testset "Use only a single variable" begin
+    t1 = testtable_y2 = tableone(pbcdata, :trt, [ :age ])  
+    t2 = testtable_y2 = tableone(pbcdata, :trt, :age)  
+    t3 = testtable_y2 = tableone(pbcdata, :trt, "age")  
+    @testset for col ∈ names(t1) 
+        v1 = getproperty(t1, col)
+        v2 = getproperty(t2, col)
+        v3 = getproperty(t3, col)
+        @testset for i ∈ axes(t1, 1)
+            @test v1[i] == v2[i]
+            @test v1[i] == v3[i]
+        end
+    end
+end # @testset "Use only a single variable"
+
+@testset "Single variables to keyword arguments" begin
+    t1 = tableone(pbcdata, :trt, [ :age, :sex, :bili, :stage ];
+        binvars = [ :sex ], catvars = [ :stage ], npvars = [ :bili ])  
+    t2 = tableone(pbcdata, :trt, [ :age, :sex, :bili, :stage ];
+        binvars = [ :sex ], catvars = :stage, npvars = [ :bili ])  
+    t3 = tableone(pbcdata, :trt, [ :age, :sex, :bili, :stage ];
+        binvars = :sex, catvars = :stage, npvars = :bili) 
+    t4 = tableone(pbcdata, :trt, [ "age", "sex", "bili", "stage" ];
+        binvars = [ "sex" ], catvars = [ "stage" ], npvars = [ "bili" ])  
+    t5 = tableone(pbcdata, :trt, [ "age", "sex", "bili", "stage" ];
+        binvars = [ "sex" ], catvars = "stage", npvars = [ "bili" ])  
+    t6 = tableone(pbcdata, :trt, [ "age", "sex", "bili", "stage" ];
+        binvars = "sex", catvars = "stage", npvars = "bili") 
+    @testset for col ∈ names(t1) 
+        v1 = getproperty(t1, col)
+        v2 = getproperty(t2, col)
+        v3 = getproperty(t3, col)
+        v4 = getproperty(t4, col)
+        v5 = getproperty(t5, col)
+        v6 = getproperty(t6, col)
+        @testset for i ∈ axes(t1, 1)
+            @test v1[i] == v2[i]
+            @test v1[i] == v3[i]
+            @test v1[i] == v4[i]
+            @test v1[i] == v5[i]
+            @test v1[i] == v6[i]
+        end
+    end
+end
+
+@testset "Select all variables" begin
+    testtable1 = tableone(
+        pbcdata,
+        :trt,
+        # variables must be in same order as the DataFrame
+        [ :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema ]
+    )  
+    tempdf = select(pbcdata, :trt, :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema)
+    testtable2 = tableone(tempdf, :trt)
+    @testset for col ∈ names(testtable1) 
+        v1 = getproperty(testtable1, col)
+        v2 = getproperty(testtable2, col)
+        @testset for i ∈ axes(testtable1, 1)
+            @test v1[i] == v2[i]
+        end
+    end
+end
+
 @testset "Identify categorical variables automatically" begin
-    
+    # use synthetic data 
+    df = DataFrame(
+        :id => collect(1:1:20),
+        :trt => [ repeat([ "A" ], 10); repeat([ "B" ], 10) ],
+        :num => rand(20),
+        :cats => [ repeat([ "X", "Y" ], 5); repeat([ "Z" ], 10) ]
+    )
+    testtable1 = tableone(df, :trt, [ :num, :cats ]; catvars = :cats)
+    testtable2 = tableone(df, :trt, [ :num, :cats ])
+    @testset for col ∈ names(testtable1) 
+        v1 = getproperty(testtable1, col)
+        v2 = getproperty(testtable2, col)
+        @testset for i ∈ axes(testtable1, 1)
+            @test v1[i] == v2[i]
+        end
+    end
 end # @testset "Identify categorical variables automatically" 
 
 @testset "Undefined keywords" begin

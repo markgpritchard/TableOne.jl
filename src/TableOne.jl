@@ -144,8 +144,12 @@ end
 # In case only one variable is supplied, rather than a vector
 tableone(data, strata, var; kwargs...) = tableone(data, strata, [ var ]; kwargs...)
 
-# If `vars` is not supplied, defaults to use all variables in the dataset
-tableone(data, strata; kwargs...) = tableone(data, strata, Symbol.(names(data)); kwargs...)
+# If `vars` is not supplied, defaults to use all variables in the dataset except strata
+function tableone(data, strata; kwargs...)
+    alldfvars = Symbol.(names(data))
+    t1vars = alldfvars[findall(x -> x != strata, alldfvars)]
+    return tableone(data, strata, t1vars; kwargs...)
+end
 
 # Variables can be listed as Symbols or Strings, but need to be consistent. Functions 
 # to check this consistency and make sure all lists are vectors
