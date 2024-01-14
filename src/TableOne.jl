@@ -1,7 +1,7 @@
 
 module TableOne
 
-using DataFrames, StatsBase
+using DataFrames, HypothesisTests, StatsBase, UnPack
 
 export tableone
 
@@ -43,6 +43,9 @@ Any variables not included in one of these arguments will be presented as
     standard deviations and percentages
 * `includemissingintotal = false`: include records with missing stratification variable 
     in the totals column. This option has no effect if `addtotal == false`
+* `pdigits = 3`: number of digits to be displayed after the decimal place for p-values
+* `pvalues = false`: whether to display significant test p-values for each variable 
+    in the table
 * `varnames = nothing`: optionally, a `Dict` of names for variables different 
     from the column titles in `data`, of the form `Dict(:columnname => "name to print")`. 
     Any variables not included will be listed by the column name
@@ -71,8 +74,8 @@ julia> tableone(
     varnames = Dict(
         "age" => "Age, years",
         "hepato" => "Hepatomegaly", 
-        "bili" => "Bilirubin: mg/dL", 
-        "chol" => "Cholesterol: mg/dL"
+        "bili" => "Bilirubin, mg/dL", 
+        "chol" => "Cholesterol, mg/dL"
     )
 )
 15×4 DataFrame
@@ -87,8 +90,8 @@ julia> tableone(
    6 │     0.0                           132 (83.54)           131 (85.06)
    7 │     0.5                           16 (10.13)            13 (8.44)
    8 │     1.0                           10 (6.33)             10 (6.49)
-   9 │ Bilirubin: mg/dL: median [IQR]    1.4 [0.8–3.2]         1.3 [0.72–3.6]        0
-  10 │ Cholesterol: mg/dL: median [IQR]  315.5 [247.75–417.0]  303.5 [254.25–377.0]  28
+   9 │ Bilirubin, mg/dL: median [IQR]    1.4 [0.8–3.2]         1.3 [0.72–3.6]        0
+  10 │ Cholesterol, mg/dL: median [IQR]  315.5 [247.75–417.0]  303.5 [254.25–377.0]  28
   11 │ stage                                                                         0
   12 │     1                             12 (7.59)             4 (2.6)
   13 │     2                             35 (22.15)            32 (20.78)
@@ -98,14 +101,14 @@ julia> tableone(
 """
 function tableone(data, strata, vars::Vector{S}; 
         binvars = S[ ], catvars = S[ ], npvars = S[ ], 
-        addnmissing = true, addtotal = false, includemissingintotal = false, kwargs...
+        addnmissing = true, addtotal = false, includemissingintotal = false, 
+        pvalues = false, kwargs...
     ) where S 
-    stratanames = unique(getproperty(data, strata))
+    stratanames = collect(skipmissing(unique(getproperty(data, strata))))       
     strataids = Dict{Symbol}{Vector{Int}}()
     table1 = DataFrame()
     insertcols!(table1, :variablenames => [ "n" ])
     for sn ∈ stratanames 
-        ismissing(sn) && continue
         ids = findall(x -> !ismissing(x) && x == sn, getproperty(data, strata))
         n = length(ids)
         insertcols!(table1, Symbol(sn) => [ "$n" ])
@@ -136,8 +139,9 @@ function tableone(data, strata, vars::Vector{S};
             end
         end
     end
+    if pvalues insertcols!(table1, :p => [ "" ]) end
     tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
-        addnmissing, addtotal, includemissingintotal, kwargs...)
+        addnmissing, addtotal, includemissingintotal, pvalues, kwargs...)
     return table1
 end
 
@@ -179,11 +183,11 @@ end
 # arguments throw an error
 function tableone!(table1, data, strata, stratanames, strataids, vars::Vector{S}, 
         binvars::Vector{S}, catvars::Vector{S}, npvars::Vector{S}; 
-        addnmissing, addtotal, includemissingintotal, #default values for these already supplied
-        binvardisplay = nothing, digits = 1, varnames = nothing
+        addnmissing, addtotal, includemissingintotal, pvalues, #default values for these already supplied
+        binvardisplay = nothing, digits = 1, pdigits = 3, varnames = nothing
     ) where S
     _tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
-        addnmissing, addtotal, includemissingintotal, binvardisplay, digits, varnames)
+        addnmissing, addtotal, includemissingintotal, binvardisplay, digits, pdigits, pvalues, varnames)
 end
 
 function _tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
@@ -221,76 +225,103 @@ function newvariable(v, strata, stratanames, strataids, varvect, varname, binvar
     end
 end
 
-function catvariable(strata, stratanames, strataids, varvect, varname; 
+function catvariable(strata, stratanames, strataids, varvect, varname; pvalues, kwargs...)
+    levels = skipmissing(sort(unique(varvect)))
+    if pvalues 
+        w = length(stratanames)
+        ℓ = length(collect(levels))
+        pmatrix = zeros(Int, ℓ, w)
+        return _catvariable(strata, stratanames, strataids, varvect, varname, levels, pmatrix; kwargs...)
+    else 
+        return _catvariable(strata, stratanames, strataids, varvect, varname, levels, nothing; kwargs...)
+    end
+end
+
+function _catvariable(strata, stratanames, strataids, varvect, varname, levels, pmatrix; 
         addnmissing, addtotal, kwargs...
     )
-    levels = skipmissing(sort(unique(varvect)))
     _t = DataFrame()
     variablenames::Vector{String} = [ [ varname ]; [ "    $lev" for lev ∈ levels ] ]
     insertcols!(_t, :variablenames => variablenames)
-    for sn ∈ stratanames 
-        ismissing(sn) && continue
+    for (i, sn) ∈ enumerate(stratanames) 
         ids = strataids[Symbol(sn)]
-        catvariable!(_t, varvect, levels, ids, sn; kwargs...)
+        catvariable!(_t, varvect, levels, ids, sn, pmatrix, i; kwargs...)
     end
     if addtotal 
         ids = strataids[:Total]
-        catvariable!(_t, varvect, levels, ids, "Total"; kwargs...)
+        catvariable!(_t, varvect, levels, ids, "Total", nothing, nothing; kwargs...)
     end
     if addnmissing addnmissing!(_t, varvect, strataids) end
+    addcatpvalue!(_t, pmatrix; kwargs...)
     return _t
 end
 
-function catvariable!(_t::DataFrame, varvect, levels, stratumids, sn; kwargs...) 
+function catvariable!(_t::DataFrame, varvect, levels, stratumids, sn, pmatrix, i; kwargs...) 
     estimates::Vector{String} = [ "" ]
-    for lev ∈ levels 
-        catvariable!(estimates, varvect, lev, stratumids; kwargs...)
+    for (j, lev) ∈ enumerate(levels) 
+        catvariable!(estimates, varvect, lev, stratumids, pmatrix, i, j; kwargs...)
     end
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
-function catvariable!(estimates::Vector{String}, varvect, level, stratumids; 
+function catvariable!(estimates::Vector{String}, varvect, level, stratumids, pmatrix, i, j; 
         digits, kwargs...
     ) # note that this function is used for both categorical and binary variables
     # find those with non-missing values (this is our denominator)
+    @unpack n, denom = catvalues(varvect, level, stratumids)
+    catvarpmatrix!(pmatrix, n, i, j)
+    pc = 100 * n / denom
+    push!(estimates, "$(sprint(show, n)) ($(sprint(show, round(pc; digits))))")
+end
+
+function catvalues(varvect, level, stratumids)
     nonmissingids = findall(!ismissing, varvect)
     nonmissingstratumids = findall(x -> x ∈ nonmissingids, stratumids)
     denom = length(nonmissingstratumids)
     levelids = findall(x -> !ismissing(x) && x == level, varvect)
     inclusion = findall(x -> x ∈ levelids, stratumids)
     n = length(inclusion)
-    pc = 100 * n / denom
-    push!(estimates, "$(sprint(show, n)) ($(sprint(show, round(pc; digits))))")
+    return ( n = n, denom = denom )
 end
 
-function binvariable(v, strata, stratanames, strataids, varvect, varname; 
+function binvariable(v, strata, stratanames, strataids, varvect, varname; pvalues, kwargs...)
+    if pvalues 
+        w = length(stratanames)
+        pmatrix = zeros(Int, 2, w)
+        return _binvariable(v, strata, stratanames, strataids, varvect, varname, pmatrix; kwargs...)
+    else 
+        return _binvariable(v, strata, stratanames, strataids, varvect, varname, nothing; kwargs...)
+    end
+end
+
+function _binvariable(v, strata, stratanames, strataids, varvect, varname, pmatrix; 
         addnmissing, addtotal, binvardisplay, kwargs...
     )
     level = binvariabledisplay(v, varvect, binvardisplay)
     _t = DataFrame()
     variablenames::Vector{String} = [ "$varname: $level" ]
     insertcols!(_t, :variablenames => variablenames)
-    for sn ∈ stratanames 
-        ismissing(sn) && continue
+    for (i, sn) ∈ enumerate(stratanames) 
         ids = strataids[Symbol(sn)]
-        binvariable!(_t, varvect, level, ids, sn; kwargs...)
+        binvariable!(_t, varvect, level, ids, sn, pmatrix, i; kwargs...)
     end
     if addtotal 
         ids = strataids[:Total]
-        binvariable!(_t, varvect, level, ids, "Total"; kwargs...)
+        binvariable!(_t, varvect, level, ids, "Total", nothing, nothing; kwargs...)
     end
     if addnmissing addnmissing!(_t, varvect, strataids) end
+    addbinpvalue!(_t, pmatrix, stratanames, strataids, varvect, level; kwargs...)
     return _t
 end
 
-function binvariable!(_t, varvect, level, stratumids, sn; kwargs...)
+function binvariable!(_t, varvect, level, stratumids, sn, pmatrix, i; kwargs...)
     estimates::Vector{String} = [ ]
-    catvariable!(estimates, varvect, level, stratumids; kwargs...)
+    catvariable!(estimates, varvect, level, stratumids, pmatrix, i, 1; kwargs...)
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
 function npvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
-    return contvariable(npvariable!, strata, stratanames, strataids, varvect, "$varname: median [IQR]"; 
+    return contvariable(npvariable!, KruskalWallisTest, strata, stratanames, strataids, varvect, "$varname: median [IQR]"; 
         kwargs...
     )
 end
@@ -305,7 +336,7 @@ function npvariable!(_t, varvect, ids, sn; digits = 1, kwargs...)
 end
 
 function meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
-    return contvariable(meanvariable!, strata, stratanames, strataids, varvect, "$varname: mean (sd)"; 
+    return contvariable(meanvariable!, OneWayANOVATest, strata, stratanames, strataids, varvect, "$varname: mean (sd)"; 
         kwargs...
     )
 end
@@ -337,15 +368,25 @@ function autovariable(strata, stratanames, strataids, varvect::Vector, varname; 
     return catvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
 end
 
-function contvariable(addfn, strata, stratanames, strataids, varvect, varname; 
+function contvariable(addfn, pfn, strata, stratanames, strataids, varvect, varname; 
+        pvalues, kwargs...
+    ) 
+    if pvalues pvectors = Vector{Real}[ ]
+    else       pvectors = nothing 
+    end
+    return _contvariable(addfn, pfn, strata, stratanames, strataids, varvect, varname, pvectors; 
+        kwargs...) 
+end
+
+function _contvariable(addfn, pfn, strata, stratanames, strataids, varvect, varname, pvectors; 
         addnmissing, addtotal, kwargs...
     )
     _t = DataFrame()
     variablenames::Vector{String} = [ varname ]
     insertcols!(_t, :variablenames => variablenames)
     for sn ∈ stratanames 
-        ismissing(sn) && continue
         ids = strataids[Symbol(sn)]
+        contpvectors!(pvectors, collect(skipmissing(varvect[ids])))
         addfn(_t, varvect, ids, sn; kwargs...)
     end
     if addtotal
@@ -353,6 +394,7 @@ function contvariable(addfn, strata, stratanames, strataids, varvect, varname;
         addfn(_t, varvect, ids, "Total"; kwargs...)
     end
     if addnmissing addnmissing!(_t, varvect, strataids) end
+    addcontpvalue!(_t, pfn, pvectors; kwargs...)
     return _t
 end
 
@@ -379,6 +421,52 @@ function binvariabledisplay(v, varvect, binvardisplay::Dict)
     if v ∈ keys(binvardisplay) return binvardisplay[v]
     else                       return maximum(skipmissing(unique(varvect)))
     end 
+end
+
+catvarpmatrix!(pmatrix::Nothing, n, i, j) = nothing
+
+catvarpmatrix!(pmatrix::Matrix{<:Integer}, n::Int, i::Int, j::Int) = pmatrix[j, i] = n
+
+contpvectors!(pvectors::Nothing, newvect) = nothing 
+
+contpvectors!(pvectors::Vector, newvect) = push!(pvectors, newvect)
+
+addcatpvalue!(_t, pmatrix::Nothing; kwargs...) = nothing
+
+function addcatpvalue!(_t, pmatrix::Matrix{<:Integer}; kwargs...)
+    p = catpvalue(pmatrix)
+    addpvalue!(_t, p; kwargs...)
+end
+
+addbinpvalue!(_t, pmatrix::Nothing, stratanames, strataids, varvect, level; kwargs...) = nothing
+
+function addbinpvalue!(_t, pmatrix::Matrix{<:Integer}, stratanames, strataids, varvect, level; kwargs...)
+    for (i, sn) ∈ enumerate(stratanames) 
+        stratumids = strataids[Symbol(sn)]
+        @unpack n, denom = catvalues(varvect, level, stratumids)
+        pmatrix[2, i] = denom - n
+    end
+    p = catpvalue(pmatrix)
+    addpvalue!(_t, p; kwargs...)
+end
+
+addcontpvalue!(_t, func, pvectors::Nothing; kwargs...) = nothing
+
+function addcontpvalue!(_t, func, pvectors; kwargs...)
+    p = pvalue(func(pvectors...))
+    addpvalue!(_t, p; kwargs...)
+end
+
+function addpvalue!(_t, p; pdigits, kwargs...)
+    pcol = [ "" for _ ∈ axes(_t, 1) ]
+    pcol[1] = "$(sprint(show, round(p; digits = pdigits)))"
+    insertcols!(_t, :p => pcol)
+end
+
+function catpvalue(pmatrix)
+    if size(pmatrix) == ( 2, 2 ) return pvalue(FisherExactTest(pmatrix...)) 
+    else                         return pvalue(ChisqTest(pmatrix)) 
+    end
 end
 
 end # module TableOne
