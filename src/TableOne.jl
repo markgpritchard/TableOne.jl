@@ -327,11 +327,9 @@ function binvariable!(_t, varvect, level, stratumids, sn, pmatrix, i; kwargs...)
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
-function npvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
-    return contvariable(npvariable!, KruskalWallisTest, strata, stratanames, strataids, varvect, "$varname: median [IQR]"; 
-        kwargs...
-    )
-end
+npvariable(strata, stratanames, strataids, varvect, varname; kwargs...) =
+    contvariable(npvariable!, KruskalWallisTest, strata, stratanames, strataids, 
+        varvect, "$varname: median [IQR]"; kwargs...)
 
 function npvariable!(_t, varvect, ids, sn; digits = 1, kwargs...)
     med = median(skipmissing(varvect[ids]))
@@ -342,11 +340,9 @@ function npvariable!(_t, varvect, ids, sn; digits = 1, kwargs...)
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
-function meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
-    return contvariable(meanvariable!, OneWayANOVATest, strata, stratanames, strataids, varvect, "$varname: mean (sd)"; 
-        kwargs...
-    )
-end
+meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...) =
+    contvariable(meanvariable!, OneWayANOVATest, strata, stratanames, strataids, 
+        varvect, "$varname: mean (sd)"; kwargs...)
 
 function meanvariable!(_t, varvect, ids, sn; digits, kwargs...)
     mn = mean(skipmissing(varvect[ids]))
@@ -357,13 +353,11 @@ function meanvariable!(_t, varvect, ids, sn; digits, kwargs...)
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
-function autovariable(strata, stratanames, strataids, varvect::AbstractVector, varname; kwargs...)
-    return autovariable(strata, stratanames, strataids, Array(varvect), varname; kwargs...)
-end
+autovariable(strata, stratanames, strataids, varvect::AbstractVector, varname; kwargs...) =
+    autovariable(strata, stratanames, strataids, Array(varvect), varname; kwargs...)
 
-function autovariable(strata, stratanames, strataids, varvect::Vector{<:Number}, varname; kwargs...)
-    return meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
-end
+autovariable(strata, stratanames, strataids, varvect::Vector{<:Number}, varname; kwargs...) =
+    meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
 
 function autovariable(strata, stratanames, strataids, varvect::Vector{S}, varname; 
         kwargs...
@@ -371,9 +365,8 @@ function autovariable(strata, stratanames, strataids, varvect::Vector{S}, varnam
     return meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
 end
 
-function autovariable(strata, stratanames, strataids, varvect::Vector, varname; kwargs...)
-    return catvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
-end
+autovariable(strata, stratanames, strataids, varvect::Vector, varname; kwargs...) =
+    catvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
 
 function contvariable(addfn, pfn, strata, stratanames, strataids, varvect, varname; 
         pvalues, kwargs...
