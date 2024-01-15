@@ -37,7 +37,7 @@ Any variables not included in one of these arguments will be presented as
 * `addnmissing = true`: include the numer of records with missing values for each 
     variable. If `true`, will also display number with missing `strata` values
 * `addtestname = false`: show the name of the statistical test used to calculate 
-    p-values. This option has no effect unless `pvalues = true`
+    p-values. This option has no effect unless `pvalues == true`
 * `addtotal = false`: include a column of totals across all `strata`
 * `binvardisplay = nothing`: optionally, a `Dict` to choose the level to display 
     for binary values. Any variables not listed will use the value chosen by `maximum(skipmissing(.))`
