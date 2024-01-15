@@ -415,22 +415,27 @@ end # @testset "Identify categorical variables automatically"
     end     
     
     @testset "p-values" begin
-        # The p-values produced by this function do not currently match the values 
-        # produced by CreateTableOne in R. For now, both vectors are stored here 
-        # and we compare to both until the difference is explained
         tv1 = getproperty(testtable_y2p, :p)
         @testset "Compared to CreateTableOne" begin
             @testset for i ∈ eachindex(pvals_r)
                 if i ∈ [ 3, 8, 9, 11, 23, 25 ]
-                    @test_skip tv1[i] == pvals_r[i]
+                    # The p-values produced by this function do not all match the
+                    # values produced by CreateTableOne in R. For now, both vectors 
+                    # are stored until the difference is explained
+                    if i ∈ [ 8, 9, 11, 23 ]
+                        # These values differ by only 0.001, so may be a rounding 
+                        # error. Compare these to values previously produced by this 
+                        # function 
+                        @test tv1[i] == pvals_stable[i]
+                    else 
+                        # These differ by greater amounts. Disable the comparison 
+                        # and compare to the values previously produced
+                        @test_skip tv1[i] == pvals_r[i]
+                        @test tv1[i] == pvals_stable[i]
+                    end
                 else
                     @test tv1[i] == pvals_r[i]
                 end
-            end
-        end
-        @testset "Compared to previous version from this function" begin
-            @testset for i ∈ eachindex(pvals_stable)
-                @test tv1[i] == pvals_stable[i]
             end
         end
     end
