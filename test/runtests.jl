@@ -439,6 +439,36 @@ end # @testset "Identify categorical variables automatically"
             end
         end
     end
+
+    @testset "Add test name" begin
+        testtable_y2pn = tableone(
+            pbcdata,
+            :trt,
+            [ :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema, 
+                :bili, :chol, :albumin, :copper, Symbol("alk.phos"), :ast, :trig, :platelet, 
+                :protime, :stage ];
+            binvars = [ :sex, :ascites, :hepato, :spiders ], 
+            catvars = [ :status, :edema, :stage ], 
+            npvars = [ :bili, :chol, :copper, Symbol("alk.phos"), :trig ], 
+            addnmissing = false,
+            digits = 2, 
+            binvardisplay = Dict(:sex => "f"),
+            pvalues = true,
+            addtestname = true
+        )  
+        # First four columns should be identical 
+        @testset for vname ∈ [ tablecolumnnames; :p ]
+            tv1 = getproperty(testtable_y2p, vname)
+            mv1 = getproperty(testtable_y2pn, vname)
+            @testset for i ∈ axes(modeltesttable, 1)
+                @test tv1[i] == mv1[i]
+            end
+        end     
+        tv1 = getproperty(testtable_y2pn, :test)
+        @testset for i ∈ eachindex(testnames)
+            @test tv1[i] == testnames[i]
+        end
+    end
 end
 
 @testset "Undefined keywords" begin

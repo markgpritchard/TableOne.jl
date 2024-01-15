@@ -36,6 +36,8 @@ Any variables not included in one of these arguments will be presented as
 ## Additional keyword arguments 
 * `addnmissing = true`: include the numer of records with missing values for each 
     variable. If `true`, will also display number with missing `strata` values
+* `addtestname = false`: show the name of the statistical test used to calculate 
+    p-values. This option has no effect unless `pvalues = true`
 * `addtotal = false`: include a column of totals across all `strata`
 * `binvardisplay = nothing`: optionally, a `Dict` to choose the level to display 
     for binary values. Any variables not listed will use the value chosen by `maximum(skipmissing(.))`
@@ -101,8 +103,8 @@ julia> tableone(
 """
 function tableone(data, strata, vars::Vector{S}; 
         binvars = S[ ], catvars = S[ ], npvars = S[ ], 
-        addnmissing = true, addtotal = false, includemissingintotal = false, 
-        pvalues = false, kwargs...
+        addnmissing = true, addtestname = false, addtotal = false, 
+        includemissingintotal = false, pvalues = false, kwargs...
     ) where S 
     stratanames = collect(skipmissing(unique(getproperty(data, strata))))       
     strataids = Dict{Symbol}{Vector{Int}}()
@@ -139,9 +141,12 @@ function tableone(data, strata, vars::Vector{S};
             end
         end
     end
-    if pvalues insertcols!(table1, :p => [ "" ]) end
+    if pvalues 
+        insertcols!(table1, :p => [ "" ]) 
+        if addtestname insertcols!(table1, :test => [ "" ]) end
+    end
     tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
-        addnmissing, addtotal, includemissingintotal, pvalues, kwargs...)
+        addnmissing, addtestname, addtotal, includemissingintotal, pvalues, kwargs...)
     return table1
 end
 
@@ -183,11 +188,13 @@ end
 # arguments throw an error
 function tableone!(table1, data, strata, stratanames, strataids, vars::Vector{S}, 
         binvars::Vector{S}, catvars::Vector{S}, npvars::Vector{S}; 
-        addnmissing, addtotal, includemissingintotal, pvalues, #default values for these already supplied
+        addnmissing, addtestname, addtotal, includemissingintotal, pvalues, 
+        # for which default values are already supplied
         binvardisplay = nothing, digits = 1, pdigits = 3, varnames = nothing
     ) where S
     _tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
-        addnmissing, addtotal, includemissingintotal, binvardisplay, digits, pdigits, pvalues, varnames)
+        addnmissing, addtestname, addtotal, includemissingintotal, binvardisplay, 
+        digits, pdigits, pvalues, varnames)
 end
 
 function _tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
@@ -434,8 +441,8 @@ contpvectors!(pvectors::Vector, newvect) = push!(pvectors, newvect)
 addcatpvalue!(_t, pmatrix::Nothing; kwargs...) = nothing
 
 function addcatpvalue!(_t, pmatrix::Matrix{<:Integer}; kwargs...)
-    p = catpvalue(pmatrix)
-    addpvalue!(_t, p; kwargs...)
+    @unpack p, testname = catpvalue(pmatrix)
+    addpvalue!(_t, p, testname; kwargs...)
 end
 
 addbinpvalue!(_t, pmatrix::Nothing, stratanames, strataids, varvect, level; kwargs...) = nothing
@@ -446,27 +453,49 @@ function addbinpvalue!(_t, pmatrix::Matrix{<:Integer}, stratanames, strataids, v
         @unpack n, denom = catvalues(varvect, level, stratumids)
         pmatrix[2, i] = denom - n
     end
-    p = catpvalue(pmatrix)
-    addpvalue!(_t, p; kwargs...)
+    @unpack p, testname = catpvalue(pmatrix)
+    addpvalue!(_t, p, testname; kwargs...)
 end
 
 addcontpvalue!(_t, func, pvectors::Nothing; kwargs...) = nothing
 
 function addcontpvalue!(_t, func, pvectors; kwargs...)
     p = pvalue(func(pvectors...))
-    addpvalue!(_t, p; kwargs...)
+    addpvalue!(_t, p, func; kwargs...)
 end
 
-function addpvalue!(_t, p; pdigits, kwargs...)
+function addpvalue!(_t, p, testname; addtestname, pdigits, kwargs...)
     pcol = [ "" for _ ∈ axes(_t, 1) ]
     pcol[1] = "$(sprint(show, round(p; digits = pdigits)))"
     insertcols!(_t, :p => pcol)
+    if addtestname addtestname!(_t, testname) end
 end
 
-function catpvalue(pmatrix)
-    if size(pmatrix) == ( 2, 2 ) return pvalue(FisherExactTest(pmatrix...)) 
-    else                         return pvalue(ChisqTest(pmatrix)) 
+addtestname!(_t, testname) = addtestname!(_t, "$testname")
+
+function addtestname!(_t, testname::AbstractString)
+    if occursin("HypothesisTests.", testname)
+        htstring = collect(findall("HypothesisTests.", testname)...)
+        allstring = collect(eachindex(testname))
+        inds = findall(x -> x ∉ htstring, allstring)
+        tn = testname[inds]
+    else 
+        tn = testname 
     end
+    tncol = [ "" for _ ∈ axes(_t, 1) ]
+    tncol[1] = tn 
+    insertcols!(_t, :test => tncol)
+end 
+
+function catpvalue(pmatrix)
+    if size(pmatrix) == ( 2, 2 ) 
+        p = pvalue(FisherExactTest(pmatrix...)) 
+        testname = FisherExactTest
+    else                         
+        p = pvalue(ChisqTest(pmatrix)) 
+        testname = ChisqTest
+    end
+    return ( p = p, testname = testname )
 end
 
 end # module TableOne

@@ -284,3 +284,35 @@ pvals_stable = [
     "",
     ""
 ]
+
+testnames = [
+    "",
+    "OneWayANOVATest",
+    "ChisqTest",
+    "",
+    "",
+    "",
+    "OneWayANOVATest",
+    "FisherExactTest",
+    "FisherExactTest",
+    "FisherExactTest",
+    "FisherExactTest",
+    "ChisqTest",
+    "",
+    "",
+    "",
+    "KruskalWallisTest",
+    "KruskalWallisTest",
+    "OneWayANOVATest",
+    "KruskalWallisTest",
+    "KruskalWallisTest",
+    "OneWayANOVATest",
+    "KruskalWallisTest",
+    "OneWayANOVATest",
+    "OneWayANOVATest",
+    "ChisqTest",
+    "",
+    "",
+    "",
+    ""
+]
