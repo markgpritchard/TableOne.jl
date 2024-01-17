@@ -471,7 +471,7 @@ end # @testset "Identify categorical variables automatically"
     end
 end
 
-@testset "String variables for edema" begin
+@testset "Text / labelled variables for edema" begin
     using CategoricalArrays
     @testset "Vector of Strings" begin
         edemaconversion1 = DataFrame(
@@ -624,8 +624,74 @@ end
                 @test t1[i] == ori1[i]
             end
         end
+        @testset "CategoricalArray not provided as `catvars` keyword argument" begin
+            # should be the same as if it is 
+            t1_caonv = tableone(
+                pbcdata_cao,
+                :trt,
+                [ "age", "sex", "hepato", "edemalevel", "bili", "chol", "stage" ];
+                binvars = [ "sex", "hepato" ],
+                catvars = [ "stage" ],
+                npvars = [ "bili", "chol" ],
+                digits = 2,
+                binvardisplay = Dict("sex" => "f"),
+                varnames = Dict(
+                    "age" => "Age, years",
+                    "hepato" => "Hepatomegaly",
+                    "bili" => "Bilirubin, mg/dL",
+                    "chol" => "Cholesterol, mg/dL"
+                )
+            )
+            @testset for col ∈ names(t1_cao)
+                t1 = getproperty(t1_cao, col)
+                t1nv = getproperty(t1_caonv, col)
+                @testset for i ∈ eachindex(t1)
+                    @test t1[i] == t1nv[i]
+                end
+            end
+        end
     end
 end
+
+@testset "Use CategoricalArray for binary variable" begin
+    using CategoricalArrays
+    insertcols!(pbcdata, :catsex => CategoricalArray(pbcdata.sex; ordered = true))
+    levels!(pbcdata.catsex, [ "m", "f" ])
+    testtable_s2 = tableone(
+        pbcdata,
+        :trt,
+        [ "time", "status", "age", "catsex", "ascites", "hepato", "spiders", "edema", 
+            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet", 
+            "protime", "stage" ];
+        binvars = [ "catsex", "ascites", "hepato", "spiders" ], 
+        catvars = [ "status", "edema", "stage" ], 
+        npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ], 
+        addnmissing = false,
+        digits = 2, 
+        varnames = Dict("catsex" => "sex")
+    )
+    @testset "Compare column names to test data" begin
+        testtable_s2names = names(testtable_s2)
+        @testset for i ∈ eachindex(testtable_s2names)
+            @test testtable_s2names[i] == tablecolumnnames[i]
+        end
+    end
+    @testset "Compare variable names to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test testtable_s2.variablenames[i] == variablenames[i]
+        end
+    end
+    @testset "Compare trt = 1 to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test getproperty(testtable_s2, Symbol("1"))[i] == col1_2[i]
+        end
+    end
+    @testset "Compare trt = 2 to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test getproperty(testtable_s2, Symbol("2"))[i] == col2_2[i]
+        end
+    end
+end 
 
 @testset "Undefined keywords" begin
     # Any undefined keywords should generate an error

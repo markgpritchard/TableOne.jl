@@ -361,19 +361,13 @@ function meanvariable!(_t, varvect, ids, sn; digits, kwargs...)
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
-autovariable(strata, stratanames, strataids, varvect::AbstractVector, varname; kwargs...) =
-    autovariable(strata, stratanames, strataids, Array(varvect), varname; kwargs...)
-
-autovariable(strata, stratanames, strataids, varvect::Vector{<:Number}, varname; kwargs...) =
-    meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
-
-function autovariable(strata, stratanames, strataids, varvect::Vector{S}, varname; 
+function autovariable(strata, stratanames, strataids, varvect::AbstractVector{S}, varname; 
         kwargs...
     ) where S <:Union{<:Number, Missing}
     return meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
 end
 
-autovariable(strata, stratanames, strataids, varvect::Vector, varname; kwargs...) =
+autovariable(strata, stratanames, strataids, varvect::AbstractVector, varname; kwargs...) =
     catvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
 
 function contvariable(addfn, pfn, strata, stratanames, strataids, varvect, varname; 
@@ -427,7 +421,7 @@ binvariabledisplay(v, varvect, binvardisplay::Nothing) = maximum(skipmissing(uni
 
 function binvariabledisplay(v, varvect, binvardisplay::Dict)
     if v ∈ keys(binvardisplay) return binvardisplay[v]
-    else                       return maximum(skipmissing(unique(varvect)))
+    else                       return binvariabledisplay(v, varvect, nothing)
     end 
 end
 
