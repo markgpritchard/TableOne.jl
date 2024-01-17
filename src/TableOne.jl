@@ -221,7 +221,7 @@ function _tableone!(table1, data, strata, stratanames, strataids, vars::Vector{S
         # for which default values are already supplied
         binvardisplay = nothing, digits = 1, pdigits = 3, varnames = nothing
     ) where S
-    __tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars, paramvars; 
+    __tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars, paramvars, cramvars; 
         addnmissing, addtestname, addtotal, includemissingintotal, binvardisplay, 
         digits, pdigits, pvalues, varnames)
 end
@@ -387,6 +387,55 @@ function meanvariable!(_t, varvect, ids, sn; digits, kwargs...)
     _mn = "$(sprint(show, round(mn; digits)))" 
     _sd = "$(sprint(show, round(sd; digits)))"
     estimates::Vector{String} = [ "$_mn ($_sd)" ]
+    insertcols!(_t, Symbol(sn) => estimates)
+end
+
+function cramvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
+    levels = skipmissing(sort(unique(varvect)))
+    return cramvariable(strata, stratanames, strataids, varvect, varname, levels; kwargs...)
+end
+
+function cramvariable(strata, stratanames, strataids, varvect, varname, levels; pvalues, kwargs...)
+    ℓ = length(collect(levels))
+    @assert ℓ == 2 "Cannot use cramvariable with more or less than 2 levels"
+    if pvalues 
+        w = length(stratanames)
+        pmatrix = zeros(Int, ℓ, w)
+        return _cramvariable(strata, stratanames, strataids, varvect, varname, levels, pmatrix; kwargs...)
+    else 
+        return _cramvariable(strata, stratanames, strataids, varvect, varname, levels, nothing; kwargs...)
+    end
+end
+
+function _cramvariable(strata, stratanames, strataids, varvect, varname, levels, pmatrix; 
+        addnmissing, addtotal, kwargs...
+    )
+    _t = DataFrame()
+    variablenames::Vector{String} = [ "$varname: $(levels[1])/$(levels[2])" ]
+    insertcols!(_t, :variablenames => variablenames)
+    for (i, sn) ∈ enumerate(stratanames) 
+        ids = strataids[Symbol(sn)]
+        cramvariable!(_t, varvect, levels, ids, sn, pmatrix, i; kwargs...)
+    end
+    if addtotal 
+        ids = strataids[:Total]
+        cramvariable!(_t, varvect, levels, ids, "Total", nothing, nothing; kwargs...)
+    end
+    if addnmissing addnmissing!(_t, varvect, strataids) end
+    addcatpvalue!(_t, pmatrix; kwargs...)
+    return _t
+end
+
+function cramvariable!(_t::DataFrame, varvect, levels, stratumids, sn, pmatrix, i; digits, kwargs...) 
+    @unpack n, denom = catvalues(varvect, level[1], stratumids)
+    catvarpmatrix!(pmatrix, n, i, 1)
+    n1 = deepcopy(n)
+    pc1 = 100 * n1 / denom
+    @unpack n, denom = catvalues(varvect, level[2], stratumids)
+    catvarpmatrix!(pmatrix, n, i, 2)
+    n2 = deepcopy(n)
+    pc2 = 100 * n1 / denom
+    estimates = [ "$(sprint(show, n1))/$(sprint(show, n2)) ($(sprint(show, round(pc1; digits)))/$(sprint(show, round(pc2; digits))))" ]
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
