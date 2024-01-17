@@ -32,8 +32,6 @@ julia> testdata = DataFrame(
   10 │ B          90.4592   F       Z             0.130062
   11 │ B          42.1594   M       Y             0.436471
   12 │ B          51.0417   F       Y             0.295702
-
-
 ```
 
 ## Categorical variables
