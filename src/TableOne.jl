@@ -1,9 +1,13 @@
 
 module TableOne
 
-using DataFrames, HypothesisTests, StatsBase, UnPack
+using DataFrames, HypothesisTests, PackageExtensionCompat, StatsBase, UnPack
 
 export tableone
+
+function __init__()
+    @require_extensions
+end
 
 """
     tableone(data, strata[, vars]; <keyword arguments>)
@@ -232,8 +236,12 @@ function newvariable(v, strata, stratanames, strataids, varvect, varname, binvar
     end
 end
 
-function catvariable(strata, stratanames, strataids, varvect, varname; pvalues, kwargs...)
+function catvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
     levels = skipmissing(sort(unique(varvect)))
+    return catvariable(strata, stratanames, strataids, varvect, varname, levels; kwargs...)
+end
+
+function catvariable(strata, stratanames, strataids, varvect, varname, levels; pvalues, kwargs...)
     if pvalues 
         w = length(stratanames)
         ℓ = length(collect(levels))
