@@ -316,3 +316,75 @@ testnames = [
     "",
     ""
 ]
+
+t1_vsvariablenames = [
+    "n",
+    "Age, years: mean (sd)",
+    "sex: f",
+    "Hepatomegaly: 1",
+    "edemalevel",
+    "    No edema",
+    "    Unsuccessfully treated",
+    "    Untreated or successfully treated",
+    "Bilirubin, mg/dL: median [IQR]",
+    "Cholesterol, mg/dL: median [IQR]",
+    "stage",
+    "    1",
+    "    2",
+    "    3",
+    "    4"
+]
+
+t1_orderedvariablenames = [
+    "n",
+    "Age, years: mean (sd)",
+    "sex: f",
+    "Hepatomegaly: 1",
+    "edemalevel",
+    "    No edema",
+    "    Untreated or successfully treated",
+    "    Unsuccessfully treated",
+    "Bilirubin, mg/dL: median [IQR]",
+    "Cholesterol, mg/dL: median [IQR]",
+    "stage",
+    "    1",
+    "    2",
+    "    3",
+    "    4"
+]
+
+t1_vs1 = [
+    "158",
+    "51.42 (11.01)",
+    "137 (86.71)",
+    "73 (46.2)",
+    "",
+    "132 (83.54)",
+    "10 (6.33)",
+    "16 (10.13)",
+    "1.4 [0.8–3.2]",
+    "315.5 [247.75–417.0]",
+    "",
+    "12 (7.59)",
+    "35 (22.15)",
+    "56 (35.44)",
+    "55 (34.81)"
+]
+
+t1_vs2 = [
+    "154",
+    "48.58 (9.96)",
+    "139 (90.26)",
+    "87 (56.49)",
+    "",
+    "131 (85.06)",
+    "10 (6.49)",
+    "13 (8.44)",
+    "1.3 [0.72–3.6]",
+    "303.5 [254.25–377.0]",
+    "",
+    "4 (2.6)",
+    "32 (20.78)",
+    "64 (41.56)",
+    "54 (35.06)"
+]

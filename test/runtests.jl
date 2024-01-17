@@ -471,6 +471,228 @@ end # @testset "Identify categorical variables automatically"
     end
 end
 
+@testset "Text / labelled variables for edema" begin
+    using CategoricalArrays
+    @testset "Vector of Strings" begin
+        edemaconversion1 = DataFrame(
+            edema = [ 0, .5, 1 ],
+            edemalevel = [ "No edema", "Untreated or successfully treated", "Unsuccessfully treated" ]
+        )
+        pbcdata_vs = leftjoin(pbcdata, edemaconversion1; on = :edema)
+        t1_vs = tableone(
+            pbcdata_vs,
+            :trt,
+            [ "age", "sex", "hepato", "edemalevel", "bili", "chol", "stage" ];
+            binvars = [ "sex", "hepato" ],
+            catvars = [ "edemalevel", "stage" ],
+            npvars = [ "bili", "chol" ],
+            digits = 2,
+            binvardisplay = Dict("sex" => "f"),
+            varnames = Dict(
+                "age" => "Age, years",
+                "hepato" => "Hepatomegaly",
+                "bili" => "Bilirubin, mg/dL",
+                "chol" => "Cholesterol, mg/dL"
+            )
+        )
+        # Edema levels will be sorted in alphabetical order, which will change the order 
+        @testset "Variable names" begin
+            t1 = getproperty(t1_vs, :variablenames)
+            @testset for i ∈ eachindex(t1_vsvariablenames)
+                @test t1[i] == t1_vsvariablenames[i]
+            end
+        end
+        @testset "trt = 1" begin
+            t1 = getproperty(t1_vs, Symbol("1"))
+            @testset for i ∈ eachindex(t1_vs1)
+                @test t1[i] == t1_vs1[i]
+            end
+        end
+        @testset "trt = 2" begin
+            t1 = getproperty(t1_vs, Symbol("2"))
+            @testset for i ∈ eachindex(t1_vs2)
+                @test t1[i] == t1_vs2[i]
+            end
+        end
+    end
+    @testset "Unsorted CategoricalArray" begin
+        edemaconversion2 = DataFrame(
+            edema = [ 0, .5, 1 ],
+            edemalevel = CategoricalArray(
+                [ "No edema", "Untreated or successfully treated", "Unsuccessfully treated" ]
+            )
+        )
+        pbcdata_cau = leftjoin(pbcdata, edemaconversion2; on = :edema)
+        t1_cau = tableone(
+            pbcdata_cau,
+            :trt,
+            [ "age", "sex", "hepato", "edemalevel", "bili", "chol", "stage" ];
+            binvars = [ "sex", "hepato" ],
+            catvars = [ "edemalevel", "stage" ],
+            npvars = [ "bili", "chol" ],
+            digits = 2,
+            binvardisplay = Dict("sex" => "f"),
+            varnames = Dict(
+                "age" => "Age, years",
+                "hepato" => "Hepatomegaly",
+                "bili" => "Bilirubin, mg/dL",
+                "chol" => "Cholesterol, mg/dL"
+            )
+        )
+        # Edema levels will be sorted in alphabetical order, which will change the order 
+        @testset "Variable names" begin
+            t1 = getproperty(t1_cau, :variablenames)
+            @testset for i ∈ eachindex(t1_vsvariablenames)
+                @test t1[i] == t1_vsvariablenames[i]
+            end
+        end
+        @testset "trt = 1" begin
+            t1 = getproperty(t1_cau, Symbol("1"))
+            @testset for i ∈ eachindex(t1_vs1)
+                @test t1[i] == t1_vs1[i]
+            end
+        end
+        @testset "trt = 2" begin
+            t1 = getproperty(t1_cau, Symbol("2"))
+            @testset for i ∈ eachindex(t1_vs2)
+                @test t1[i] == t1_vs2[i]
+            end
+        end
+    end
+    @testset "Sorted CategoricalArray" begin
+        edemaconversion3 = DataFrame(
+            edema = [ 0, .5, 1 ],
+            edemalevel = CategoricalArray(
+                [ "No edema", "Untreated or successfully treated", "Unsuccessfully treated" ];
+                ordered = true
+            )
+        )
+        pbcdata_cao = leftjoin(pbcdata, edemaconversion3; on = :edema)
+        # Sort edema levels in same order as original dataset 
+        levels!(pbcdata_cao.edemalevel, 
+            [ "No edema", "Untreated or successfully treated", "Unsuccessfully treated" ])
+        t1_cao = tableone(
+            pbcdata_cao,
+            :trt,
+            [ "age", "sex", "hepato", "edemalevel", "bili", "chol", "stage" ];
+            binvars = [ "sex", "hepato" ],
+            catvars = [ "edemalevel", "stage" ],
+            npvars = [ "bili", "chol" ],
+            digits = 2,
+            binvardisplay = Dict("sex" => "f"),
+            varnames = Dict(
+                "age" => "Age, years",
+                "hepato" => "Hepatomegaly",
+                "bili" => "Bilirubin, mg/dL",
+                "chol" => "Cholesterol, mg/dL"
+            )
+        )
+        @testset "Variable names" begin
+            t1 = getproperty(t1_cao, :variablenames)
+            @testset for i ∈ eachindex(t1_orderedvariablenames)
+                @test t1[i] == t1_orderedvariablenames[i]
+            end
+        end
+        # Values should be same as if CategoricalArrays not used
+        t1_orig = tableone(
+            pbcdata,
+            :trt,
+            [ "age", "sex", "hepato", "edema", "bili", "chol", "stage" ];
+            binvars = [ "sex", "hepato" ],
+            catvars = [ "edema", "stage" ],
+            npvars = [ "bili", "chol" ],
+            digits = 2,
+            binvardisplay = Dict("sex" => "f"),
+            varnames = Dict(
+                "age" => "Age, years",
+                "hepato" => "Hepatomegaly",
+                "bili" => "Bilirubin, mg/dL",
+                "chol" => "Cholesterol, mg/dL"
+            )
+        )
+        @testset "trt = 1" begin
+            t1 = getproperty(t1_cao, Symbol("1"))
+            ori1 = getproperty(t1_orig, Symbol("1"))
+            @testset for i ∈ eachindex(ori1)
+                @test t1[i] == ori1[i]
+            end
+        end
+        @testset "trt = 2" begin
+            t1 = getproperty(t1_cao, Symbol("2"))
+            ori1 = getproperty(t1_orig, Symbol("2"))
+            @testset for i ∈ eachindex(ori1)
+                @test t1[i] == ori1[i]
+            end
+        end
+        @testset "CategoricalArray not provided as `catvars` keyword argument" begin
+            # should be the same as if it is 
+            t1_caonv = tableone(
+                pbcdata_cao,
+                :trt,
+                [ "age", "sex", "hepato", "edemalevel", "bili", "chol", "stage" ];
+                binvars = [ "sex", "hepato" ],
+                catvars = [ "stage" ],
+                npvars = [ "bili", "chol" ],
+                digits = 2,
+                binvardisplay = Dict("sex" => "f"),
+                varnames = Dict(
+                    "age" => "Age, years",
+                    "hepato" => "Hepatomegaly",
+                    "bili" => "Bilirubin, mg/dL",
+                    "chol" => "Cholesterol, mg/dL"
+                )
+            )
+            @testset for col ∈ names(t1_cao)
+                t1 = getproperty(t1_cao, col)
+                t1nv = getproperty(t1_caonv, col)
+                @testset for i ∈ eachindex(t1)
+                    @test t1[i] == t1nv[i]
+                end
+            end
+        end
+    end
+end
+
+@testset "Use CategoricalArray for binary variable" begin
+    using CategoricalArrays
+    insertcols!(pbcdata, :catsex => CategoricalArray(pbcdata.sex; ordered = true))
+    levels!(pbcdata.catsex, [ "m", "f" ])
+    testtable_s2 = tableone(
+        pbcdata,
+        :trt,
+        [ "time", "status", "age", "catsex", "ascites", "hepato", "spiders", "edema", 
+            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet", 
+            "protime", "stage" ];
+        binvars = [ "catsex", "ascites", "hepato", "spiders" ], 
+        catvars = [ "status", "edema", "stage" ], 
+        npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ], 
+        addnmissing = false,
+        digits = 2, 
+        varnames = Dict("catsex" => "sex")
+    )
+    @testset "Compare column names to test data" begin
+        testtable_s2names = names(testtable_s2)
+        @testset for i ∈ eachindex(testtable_s2names)
+            @test testtable_s2names[i] == tablecolumnnames[i]
+        end
+    end
+    @testset "Compare variable names to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test testtable_s2.variablenames[i] == variablenames[i]
+        end
+    end
+    @testset "Compare trt = 1 to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test getproperty(testtable_s2, Symbol("1"))[i] == col1_2[i]
+        end
+    end
+    @testset "Compare trt = 2 to test data" begin
+        @testset for i ∈ axes(testtable_s2, 1)
+            @test getproperty(testtable_s2, Symbol("2"))[i] == col2_2[i]
+        end
+    end
+end 
+
 @testset "Undefined keywords" begin
     # Any undefined keywords should generate an error
     @test_throws MethodError tableone(
