@@ -434,7 +434,7 @@ function cramvariable!(_t::DataFrame, varvect, levels, stratumids, sn, pmatrix, 
     @unpack n, denom = catvalues(varvect, levels[2], stratumids)
     catvarpmatrix!(pmatrix, n, i, 2)
     n2 = deepcopy(n)
-    pc2 = 100 * n1 / denom
+    pc2 = 100 * n2 / denom
     estimates = [ "$(sprint(show, n1))/$(sprint(show, n2)) ($(sprint(show, round(pc1; digits)))/$(sprint(show, round(pc2; digits))))" ]
     insertcols!(_t, Symbol(sn) => estimates)
 end
