@@ -259,7 +259,7 @@ function newvariable(v, strata, stratanames, strataids, varvect, varname, binvar
     elseif v ∈ paramvars
         return meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
     elseif v ∈ cramvars 
-        return cramvariable(v, strata, stratanames, strataids, varvect, varname; kwargs...)
+        return cramvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
     else 
         return autovariable(strata, stratanames, strataids, varvect, varname; kwargs...)
     end
@@ -397,7 +397,7 @@ end
 
 function cramvariable(strata, stratanames, strataids, varvect, varname, levels; pvalues, kwargs...)
     ℓ = length(collect(levels))
-    @assert ℓ == 2 "Cannot use cramvariable with more or less than 2 levels"
+    @assert ℓ == 2 "Cannot use cramvariable with more or less than 2 levels, supplied $ℓ"
     if pvalues 
         w = length(stratanames)
         pmatrix = zeros(Int, ℓ, w)
@@ -427,11 +427,11 @@ function _cramvariable(strata, stratanames, strataids, varvect, varname, levels,
 end
 
 function cramvariable!(_t::DataFrame, varvect, levels, stratumids, sn, pmatrix, i; digits, kwargs...) 
-    @unpack n, denom = catvalues(varvect, level[1], stratumids)
+    @unpack n, denom = catvalues(varvect, levels[1], stratumids)
     catvarpmatrix!(pmatrix, n, i, 1)
     n1 = deepcopy(n)
     pc1 = 100 * n1 / denom
-    @unpack n, denom = catvalues(varvect, level[2], stratumids)
+    @unpack n, denom = catvalues(varvect, levels[2], stratumids)
     catvarpmatrix!(pmatrix, n, i, 2)
     n2 = deepcopy(n)
     pc2 = 100 * n1 / denom
