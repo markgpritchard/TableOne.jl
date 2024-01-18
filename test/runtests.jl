@@ -533,24 +533,31 @@ end
         :trt,
         # variables must be in same order as the DataFrame
         [ :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema ];
-        addtotal = true
+        addtotal = true, includemissingintotal = true
     )  
     tempdf = select(pbcdata, :trt, :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema)
     testtable2 = tableone(tempdf, :trt)
-    testtable3 = tableone(tempdf)
-    @testset for col ∈ names(testtable1) 
-        if col != :Total
-            v1 = getproperty(testtable1, col)
-            v2 = getproperty(testtable2, col)
-            @testset for i ∈ axes(testtable1, 1)
-                @test v1[i] == v2[i]
+    tempdf2 = select(pbcdata, :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema)
+    testtable3 = tableone(tempdf2)
+    @testset "With strata" begin
+        @testset for col ∈ names(testtable1) 
+            if col != "Total" && col != "nmissing"
+                v1 = getproperty(testtable1, col)
+                v2 = getproperty(testtable2, col)
+                @testset for i ∈ axes(testtable1, 1)
+                    @test v1[i] == v2[i]
+                end
             end
         end
     end
-    v1 = getproperty(testtable1, :Total)
-    v2 = getproperty(testtable3, :Total)
-    @testset for i ∈ axes(testtable1, 1)
-        @test v1[i] == v2[i]
+    @testset "No strata" begin
+        @testset for col ∈ names(testtable3) 
+            v1 = getproperty(testtable1, col)
+            v2 = getproperty(testtable3, col)
+            @testset for i ∈ axes(testtable1, 1)
+                @test v1[i] == v2[i]
+            end
+        end 
     end
 end
 
