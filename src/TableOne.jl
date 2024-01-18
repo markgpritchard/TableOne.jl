@@ -1,9 +1,13 @@
 
 module TableOne
 
-using DataFrames, HypothesisTests, StatsBase, UnPack
+using DataFrames, HypothesisTests, PackageExtensionCompat, StatsBase, UnPack
 
 export tableone
+
+function __init__()
+    @require_extensions
+end
 
 """
     tableone(data, strata[, vars]; <keyword arguments>)
@@ -101,12 +105,35 @@ julia> tableone(
   15 │     4                             55 (34.81)            54 (35.06)
 ```
 """
-function tableone(data, strata, vars::Vector{S}; 
-        binvars = S[ ], catvars = S[ ], npvars = S[ ], 
+function tableone(data, strata, vars::Vector; kwargs...) 
+    stratanames = collect(skipmissing(unique(getproperty(data, strata))))       
+    return _tableone(data, strata, vars, stratanames; kwargs...)
+end
+
+# If no strata supplied, default to showing totals column only
+tableone(data, vars::Vector; kwargs...) = tableone(data, nothing, vars; kwargs...)
+
+tableone(data) = tableone(data, nothing)
+
+function tableone(data, strata::Nothing, vars::Vector; addtotal = true, kwargs...) 
+    stratanames = String[ ]      
+    return _tableone(data, strata, vars, stratanames; addtotal, includemissingintotal = true, kwargs...)
+end
+
+# In case only one variable is supplied, rather than a vector
+tableone(data, strata, var; kwargs...) = tableone(data, strata, [ var ]; kwargs...)
+
+# If `vars` is not supplied, defaults to use variables provided in keyword arguments 
+# if any, otherwise all variables in the dataset except strata
+function tableone(data, strata; kwargs...)
+    return _tableone_novars(data, strata; kwargs...)
+end
+
+function _tableone(data, strata, vars::Vector{S}, stratanames; 
+        binvars = S[ ], catvars = S[ ], npvars = S[ ], paramvars = S[ ], cramvars = S[ ],
         addnmissing = true, addtestname = false, addtotal = false, 
         includemissingintotal = false, pvalues = false, kwargs...
     ) where S 
-    stratanames = collect(skipmissing(unique(getproperty(data, strata))))       
     strataids = Dict{Symbol}{Vector{Int}}()
     table1 = DataFrame()
     insertcols!(table1, :variablenames => [ "n" ])
@@ -145,80 +172,82 @@ function tableone(data, strata, vars::Vector{S};
         insertcols!(table1, :p => [ "" ]) 
         if addtestname insertcols!(table1, :test => [ "" ]) end
     end
-    tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
+    tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars, paramvars, cramvars; 
         addnmissing, addtestname, addtotal, includemissingintotal, pvalues, kwargs...)
     return table1
 end
 
-# In case only one variable is supplied, rather than a vector
-tableone(data, strata, var; kwargs...) = tableone(data, strata, [ var ]; kwargs...)
+function _tableone_novars(data, strata; binvars = nothing, catvars = nothing, npvars = nothing, paramvars = nothing, cramvars = nothing, kwargs...)
+    return _tableone_novars(data, strata, binvars, catvars, npvars, paramvars, cramvars; kwargs...)
+end
 
-# If `vars` is not supplied, defaults to use all variables in the dataset except strata
-function tableone(data, strata; kwargs...)
+function _tableone_novars(data, strata, binvars::Nothing, catvars::Nothing, npvars::Nothing, paramvars::Nothing, cramvars::Nothing; kwargs...)
     alldfvars = Symbol.(names(data))
     t1vars = alldfvars[findall(x -> x != strata, alldfvars)]
-    return tableone(data, strata, t1vars; kwargs...)
+    return tableone(data, strata, t1vars; binvars = Symbol[ ], catvars = Symbol[ ], npvars = Symbol[ ], paramvars = Symbol[ ], cramvars = Symbol[ ], kwargs...)
+end
+
+function _tableone_novars(data, strata, binvars, catvars, npvars, paramvars, cramvars; kwargs...
+    ) #where S <: Union{Nothing, <:AbstractString, <:AbstractVector{<:AbstractString}}
+    t1vars::Vector{S} = [ binvars; catvars; npvars; paramvars; cramvars ]
+    if isnothing(binvars) binvars = S[  ] end
+    if isnothing(catvars) catvars = S[  ] end
+    if isnothing(npvars) npvars = S[  ] end
+    if isnothing(paramvars) paramvars = S[  ] end
+    if isnothing(cramvars) cramvars = S[  ] end
+    return tableone(data, strata, t1vars; binvars, catvars, npvars, paramvars, cramvars, kwargs...)
 end
 
 # Variables can be listed as Symbols or Strings, but need to be consistent. Functions 
 # to check this consistency and make sure all lists are vectors
 
 function tableone!(table1, data, strata, stratanames, strataids, vars::Vector{S}, 
-        binvars, catvars, npvars::S; kwargs...
+        binvars, catvars, npvars, paramvars, cramvars; kwargs...
     ) where S
-    tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, [ npvars ]; 
+    if !isa(binvars, AbstractVector) binvars = [ binvars ] end
+    if !isa(catvars, AbstractVector) catvars = [ catvars ] end
+    if !isa(npvars, AbstractVector) npvars = [ npvars ] end
+    if !isa(paramvars, AbstractVector) paramvars = [ paramvars ] end
+    if !isa(cramvars, AbstractVector) cramvars = [ cramvars ] end
+    _tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars, paramvars, cramvars; 
         kwargs...)
 end
 
-function tableone!(table1, data, strata, stratanames, strataids, vars::Vector{S}, 
-        binvars, catvars::S, npvars::Vector{S}; kwargs...
-    ) where S
-    tableone!(table1, data, strata, stratanames, strataids, vars, binvars, [ catvars ], npvars; 
-        kwargs...)
-end
-
-function tableone!(table1, data, strata, stratanames, strataids, vars::Vector{S}, 
-        binvars::S, catvars::Vector{S}, npvars::Vector{S}; kwargs...
-    ) where S
-    tableone!(table1, data, strata, stratanames, strataids, vars, [ binvars ], catvars, npvars; 
-        kwargs...)
-end
-
-# List all keyword arguments and their defaults here so that unspecified keyword 
-# arguments throw an error
-function tableone!(table1, data, strata, stratanames, strataids, vars::Vector{S}, 
-        binvars::Vector{S}, catvars::Vector{S}, npvars::Vector{S}; 
+function _tableone!(table1, data, strata, stratanames, strataids, vars::Vector{S}, 
+        binvars::Vector{S}, catvars::Vector{S}, npvars::Vector{S}, paramvars::Vector{S}, cramvars::Vector{S}; 
+        # list all keyword arguments and their defaults here so that unspecified 
+        # keyword arguments throw an error
         addnmissing, addtestname, addtotal, includemissingintotal, pvalues, 
         # for which default values are already supplied
         binvardisplay = nothing, digits = 1, pdigits = 3, varnames = nothing
     ) where S
-    _tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
+    __tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars, paramvars, cramvars; 
         addnmissing, addtestname, addtotal, includemissingintotal, binvardisplay, 
         digits, pdigits, pvalues, varnames)
 end
 
-function _tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars; 
+function __tableone!(table1, data, strata, stratanames, strataids, vars, binvars, catvars, npvars, paramvars, cramvars; 
         kwargs...
     )
     for v ∈ vars
         append!(
             table1, 
-            newvariable(data, strata, stratanames, strataids, v, binvars, catvars, npvars; 
+            newvariable(data, strata, stratanames, strataids, v, binvars, catvars, npvars, paramvars, cramvars; 
                 kwargs...)
         )
     end
 end
 
-function newvariable(data, strata, stratanames, strataids, v, binvars, catvars, npvars; 
+function newvariable(data, strata, stratanames, strataids, v, binvars, catvars, npvars, paramvars, cramvars; 
         varnames, kwargs...
     )
     varvect = getproperty(data, v)
     varname = getvarname(v, varnames)
-    return newvariable(v, strata, stratanames, strataids, varvect, varname, binvars, catvars, npvars; 
+    return newvariable(v, strata, stratanames, strataids, varvect, varname, binvars, catvars, npvars, paramvars, cramvars; 
         kwargs...)
 end
 
-function newvariable(v, strata, stratanames, strataids, varvect, varname, binvars, catvars, npvars; 
+function newvariable(v, strata, stratanames, strataids, varvect, varname, binvars, catvars, npvars, paramvars, cramvars; 
         kwargs...
     )
     if v ∈ catvars 
@@ -227,13 +256,21 @@ function newvariable(v, strata, stratanames, strataids, varvect, varname, binvar
         return binvariable(v, strata, stratanames, strataids, varvect, varname; kwargs...)
     elseif v ∈ npvars
         return npvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
+    elseif v ∈ paramvars
+        return meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
+    elseif v ∈ cramvars 
+        return cramvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
     else 
         return autovariable(strata, stratanames, strataids, varvect, varname; kwargs...)
     end
 end
 
-function catvariable(strata, stratanames, strataids, varvect, varname; pvalues, kwargs...)
+function catvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
     levels = skipmissing(sort(unique(varvect)))
+    return catvariable(strata, stratanames, strataids, varvect, varname, levels; kwargs...)
+end
+
+function catvariable(strata, stratanames, strataids, varvect, varname, levels; pvalues, kwargs...)
     if pvalues 
         w = length(stratanames)
         ℓ = length(collect(levels))
@@ -353,19 +390,62 @@ function meanvariable!(_t, varvect, ids, sn; digits, kwargs...)
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
-autovariable(strata, stratanames, strataids, varvect::AbstractVector, varname; kwargs...) =
-    autovariable(strata, stratanames, strataids, Array(varvect), varname; kwargs...)
+function cramvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
+    levels = skipmissing(sort(unique(varvect)))
+    return cramvariable(strata, stratanames, strataids, varvect, varname, levels; kwargs...)
+end
 
-autovariable(strata, stratanames, strataids, varvect::Vector{<:Number}, varname; kwargs...) =
-    meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
+function cramvariable(strata, stratanames, strataids, varvect, varname, levels; pvalues, kwargs...)
+    ℓ = length(collect(levels))
+    @assert ℓ == 2 "Cannot use cramvariable with more or less than 2 levels, supplied $ℓ"
+    if pvalues 
+        w = length(stratanames)
+        pmatrix = zeros(Int, ℓ, w)
+        return _cramvariable(strata, stratanames, strataids, varvect, varname, levels, pmatrix; kwargs...)
+    else 
+        return _cramvariable(strata, stratanames, strataids, varvect, varname, levels, nothing; kwargs...)
+    end
+end
 
-function autovariable(strata, stratanames, strataids, varvect::Vector{S}, varname; 
+function _cramvariable(strata, stratanames, strataids, varvect, varname, levels, pmatrix; 
+        addnmissing, addtotal, kwargs...
+    )
+    _t = DataFrame()
+    variablenames::Vector{String} = [ "$varname: $(levels[1])/$(levels[2])" ]
+    insertcols!(_t, :variablenames => variablenames)
+    for (i, sn) ∈ enumerate(stratanames) 
+        ids = strataids[Symbol(sn)]
+        cramvariable!(_t, varvect, levels, ids, sn, pmatrix, i; kwargs...)
+    end
+    if addtotal 
+        ids = strataids[:Total]
+        cramvariable!(_t, varvect, levels, ids, "Total", nothing, nothing; kwargs...)
+    end
+    if addnmissing addnmissing!(_t, varvect, strataids) end
+    addcatpvalue!(_t, pmatrix; kwargs...)
+    return _t
+end
+
+function cramvariable!(_t::DataFrame, varvect, levels, stratumids, sn, pmatrix, i; digits, kwargs...) 
+    @unpack n, denom = catvalues(varvect, levels[1], stratumids)
+    catvarpmatrix!(pmatrix, n, i, 1)
+    n1 = deepcopy(n)
+    pc1 = 100 * n1 / denom
+    @unpack n, denom = catvalues(varvect, levels[2], stratumids)
+    catvarpmatrix!(pmatrix, n, i, 2)
+    n2 = deepcopy(n)
+    pc2 = 100 * n2 / denom
+    estimates = [ "$(sprint(show, n1))/$(sprint(show, n2)) ($(sprint(show, round(pc1; digits)))/$(sprint(show, round(pc2; digits))))" ]
+    insertcols!(_t, Symbol(sn) => estimates)
+end
+
+function autovariable(strata, stratanames, strataids, varvect::AbstractVector{S}, varname; 
         kwargs...
     ) where S <:Union{<:Number, Missing}
     return meanvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
 end
 
-autovariable(strata, stratanames, strataids, varvect::Vector, varname; kwargs...) =
+autovariable(strata, stratanames, strataids, varvect::AbstractVector, varname; kwargs...) =
     catvariable(strata, stratanames, strataids, varvect, varname; kwargs...)
 
 function contvariable(addfn, pfn, strata, stratanames, strataids, varvect, varname; 
@@ -419,7 +499,7 @@ binvariabledisplay(v, varvect, binvardisplay::Nothing) = maximum(skipmissing(uni
 
 function binvariabledisplay(v, varvect, binvardisplay::Dict)
     if v ∈ keys(binvardisplay) return binvardisplay[v]
-    else                       return maximum(skipmissing(unique(varvect)))
+    else                       return binvariabledisplay(v, varvect, nothing)
     end 
 end
 
