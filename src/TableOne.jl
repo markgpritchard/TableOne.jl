@@ -600,7 +600,7 @@ _addcatpvalue!(_t, pmatrix::Nothing; kwargs...) = nothing
 
 function _addcatpvalue!(_t, pmatrix::Matrix{<:Integer}; kwargs...)
     @unpack p, testname = _catpvalue(pmatrix)
-    addpvalue!(_t, p, testname; kwargs...)
+    _addpvalue!(_t, p, testname; kwargs...)
 end
 
 function _addbinpvalue!(
@@ -636,10 +636,10 @@ function _addpvalue!(_t, p, testname; addtestname, pdigits, kwargs...)
     pcol[1] = "$(sprint(show, round(p; digits = pdigits)))"
     insertcols!(_t, :p => pcol)
     
-    if addtestname addtestname!(_t, testname) end
+    if addtestname _addtestname!(_t, testname) end
 end
 
-_addtestname!(_t, testname) = addtestname!(_t, "$testname")
+_addtestname!(_t, testname) = _addtestname!(_t, "$testname")
 
 function _addtestname!(_t, testname::AbstractString)
     if occursin("HypothesisTests.", testname)

@@ -4,7 +4,7 @@ DocTestSetup = quote
     using DataFrames
     using StableRNGs 
 
-    ENV["COLUMNS"] = 92
+    ENV["COLUMNS"] = 100
 end
 ```
 
@@ -186,6 +186,30 @@ julia> tableone(testdata, :MissCats, [ :Sex, :MissMeasure ])
    5 │ MissMeasure: mean (sd)  0.5 (0.2)  0.7 (NaN)  1
 ```
 
+### P-values 
+
+P-values to compare between the stratification levels can be calculated automatically. Users are advised to ensure they are happy with the methods used and the values calculated. The method being used depends on the type of variable supplied. It is displayed by selecting `addtestname=true`.
+
+```jldoctest label
+julia> tableone(testdata, :Sex; pvalues=true, addtestname=true)
+13×6 DataFrame
+ Row │ variablenames           M            F            nmissing  p       test
+     │ String                  String       String       String    String  String
+─────┼─────────────────────────────────────────────────────────────────────────────────────
+   1 │ n                       7            5
+   2 │ Treatment                                         0         1.0     FisherExactTest
+   3 │     A                   3 (42.9)     3 (60.0)
+   4 │     B                   4 (57.1)     2 (40.0)
+   5 │ Age: mean (sd)          27.9 (28.2)  48.2 (34.0)  0         0.276   OneWayANOVATest
+   6 │ Cats                                              0         0.598   ChisqTest
+   7 │     X                   2 (28.6)     1 (20.0)
+   8 │     Y                   4 (57.1)     2 (40.0)
+   9 │     Z                   1 (14.3)     2 (40.0)
+  10 │ MissCats                                          4         1.0     FisherExactTest
+  11 │     U                   1 (20.0)     1 (33.3)
+  12 │     V                   4 (80.0)     2 (66.7)
+  13 │ MissMeasure: mean (sd)  0.6 (0.2)    0.5 (0.2)    2         0.605   OneWayANOVATest
+```
 
 ## Categorical variables
 
