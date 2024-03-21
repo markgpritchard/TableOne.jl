@@ -93,8 +93,8 @@ julia> tableone(testdata, [ :Treatment, :Age, :Sex, :Cats, :MissCats, :MissMeasu
 true
 ```
 
-To change the order of variables and change the order they are displayed, pass a 
-    Vector of variable names as Strings or Symbols.
+To change the order of variables and change the order they are displayed, pass a Vector of 
+    variable names as Strings or Symbols.
 
 ```jldoctest label
 julia> tableone(testdata, [ :Sex, :Age ])
@@ -120,8 +120,8 @@ julia> tableone(testdata, [ "Cats" ])
    5 │     Z          3 (25.0)
 ```
 
-Note that if you provide a single variable as a String or Symbol, rather than as 
-    a Vector, it will be interpretted as the stratification variable.
+Note that if you provide a single variable as a String or Symbol, rather than as a Vector, 
+    it will be interpretted as the stratification variable.
 
 ```jldoctest label
 julia> tableone(testdata, :Cats)
@@ -143,9 +143,60 @@ julia> tableone(testdata, :Cats)
   12 │ MissMeasure: mean (sd)  0.4 (0.2)    0.5 (0.1)    0.8 (0.1)    2
 ```
 
+Variables are automatically classified according to the data found in them. These can also 
+    be specified with keyword arguments`binvars`, `catvars`, `npvars`, `paramvars` and 
+    `cramvars`. These can be supplied with a vector of variable names or instead of one. 
+
 ### Stratification variable 
 
-A single stratification variable can be given. As above, if no variable list is supplied, all other variables will be included in the table. You can also select which variables you want to include in the table. 
+A single stratification variable can be given. As above, if no variable list is supplied, 
+    all other variables will be included in the table. You can also select which variables 
+    you want to include in the table. 
+
+```jldoctest label
+julia> tableone(testdata, :Sex, [ :Treatment, :Age ]; npvars=:Age)
+5×4 DataFrame
+ Row │ variablenames      M                F                 nmissing 
+     │ String             String           String            String   
+─────┼────────────────────────────────────────────────────────────────
+   1 │ n                  7                5
+   2 │ Treatment                                             0
+   3 │     A              3 (42.9)         3 (60.0)
+   4 │     B              4 (57.1)         2 (40.0)
+   5 │ Age: median [IQR]  13.3 [7.2–46.6]  27.2 [26.6–84.5]  0
+
+julia> tableone(testdata, :Sex; binvars=:Treatment)
+2×4 DataFrame
+ Row │ variablenames  M         F         nmissing 
+     │ String         String    String    String   
+─────┼─────────────────────────────────────────────
+   1 │ n              7         5
+   2 │ Treatment: B   4 (57.1)  2 (40.0)  0
+
+julia> tableone(testdata, :Sex; cramvars= [:Treatment ])
+2×4 DataFrame
+ Row │ variablenames   M                F                nmissing 
+     │ String          String           String           String   
+─────┼────────────────────────────────────────────────────────────
+   1 │ n               7                5
+   2 │ Treatment: A/B  3/4 (42.9/57.1)  3/2 (60.0/40.0)  0
+```
+
+Note that if you are combining the positional `vars` argument and the keyword arguments, any 
+    variables not included in `vars` will be omitted from the table. 
+
+```jldoctest label
+julia> tableone(testdata, :Sex, [ :Treatment, :Age ]; npvars=:MissMeasure)
+5×4 DataFrame
+ Row │ variablenames   M            F            nmissing 
+     │ String          String       String       String   
+─────┼────────────────────────────────────────────────────
+   1 │ n               7            5
+   2 │ Treatment                                 0
+   3 │     A           3 (42.9)     3 (60.0)
+   4 │     B           4 (57.1)     2 (40.0)
+   5 │ Age: mean (sd)  27.9 (28.2)  48.2 (34.0)  0
+```
 
 ```jldoctest label
 julia> tableone(testdata, "Treatment", [ "Age", "Sex" ])
@@ -188,7 +239,10 @@ julia> tableone(testdata, :MissCats, [ :Sex, :MissMeasure ])
 
 ### P-values 
 
-P-values to compare between the stratification levels can be calculated automatically. Users are advised to ensure they are happy with the methods used and the values calculated. The method being used depends on the type of variable supplied. It is displayed by selecting `addtestname=true`.
+P-values to compare between the stratification levels can be calculated automatically. Users 
+    are advised to ensure they are happy with the methods used and the values calculated.
+    The method being used depends on the type of variable supplied. It is displayed by 
+    selecting `addtestname=true`.
 
 ```jldoctest label
 julia> tableone(testdata, :Sex; pvalues=true, addtestname=true)
@@ -213,7 +267,9 @@ julia> tableone(testdata, :Sex; pvalues=true, addtestname=true)
 
 ## Categorical variables
 
-Categorical variables are displayed with the name of the variable on one line, then the names of each category on a separate line beneath. Each category displays the number of individuals in that category and the percentage of non-missing within that column. 
+Categorical variables are displayed with the name of the variable on one line, then the 
+    names of each category on a separate line beneath. Each category displays the number of 
+    individuals in that category and the percentage of non-missing within that column. 
 
 If a column in the data is formatted as a `CategoricalArray` then the levels in 
     that array will be shown in Table 1 as ordered in the array.

@@ -32,6 +32,8 @@ Each of these must be supplied as the same type as `vars`, e.g. if `vars` is a `
 * `catvars`: categorical variables – each level in the variable will be shown on 
     a separate line with the **number (%)** in that category
 * `npvars`: non-parametric variables – will display **median [1st–3rd quartiles]**
+* `paramvars`: parametric variables – will display **mean (standard deviation)**
+* `cramvars`: a variation on `binvars` that displays both levels in one row on the table
 
 Any variables not included in one of these arguments will be presented as 
     `mean (standard deviation)` if the contents of the variable are 
@@ -177,14 +179,20 @@ function _tableone_novars(
     data, strata, binvars::A, catvars::B, npvars::C, paramvars::D, cramvars::E; 
     kwargs...
 ) where {
-    S <: Any, 
-    A <: Union{Nothing, <:Vector{S}}, 
-    B <: Union{Nothing, <:Vector{S}}, 
-    C <: Union{Nothing, <:Vector{S}}, 
-    D <: Union{Nothing, <:Vector{S}}, 
-    E <: Union{Nothing, <:Vector{S}}
+    S <: Union{Symbol, AbstractString}, 
+    A <: Union{Nothing, S, <:Vector{S}}, 
+    B <: Union{Nothing, S, <:Vector{S}}, 
+    C <: Union{Nothing, S, <:Vector{S}}, 
+    D <: Union{Nothing, S, <:Vector{S}}, 
+    E <: Union{Nothing, S, <:Vector{S}}
 }
-    t1vars::Vector{S} = [ binvars; catvars; npvars; paramvars; cramvars ]
+    t1vars::Vector{S} = [ 
+        __tableone_novars_var(binvars, S); 
+        __tableone_novars_var(catvars, S); 
+        __tableone_novars_var(npvars, S); 
+        __tableone_novars_var(paramvars, S); 
+        __tableone_novars_var(cramvars, S) 
+    ]
     return tableone(
         data, strata, t1vars; 
         binvars = __tableone_novars_var(binvars, S), 
