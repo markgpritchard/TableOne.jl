@@ -24,7 +24,7 @@ function TableOne._catvariable(
     kwargs...
 )
     lvls = levels(varvect)
-    return TableOne._catvariable(
+    return TableOne.__catvariable(
         strata, stratanames, strataids, varvect, varname, lvls; 
         kwargs...
     )
