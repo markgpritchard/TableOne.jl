@@ -70,7 +70,7 @@ end
 # If no strata supplied, default to showing totals column only
 tableone(data, vars::Vector; kwargs...) = tableone(data, nothing, vars; kwargs...)
 
-tableone(data) = tableone(data, nothing)
+tableone(data; kwargs...) = tableone(data, nothing; kwargs...)
 
 function tableone(data, strata::Nothing, vars::Vector; addtotal=true, kwargs...) 
     stratanames = String[ ]      
@@ -628,7 +628,7 @@ function _addbinpvalue!(
         pmatrix[2, i] = denom - n
     end
     
-    @unpack p, testname = catpvalue(pmatrix)
+    @unpack p, testname = _catpvalue(pmatrix)
     _addpvalue!(_t, p, testname; kwargs...)
 end
 

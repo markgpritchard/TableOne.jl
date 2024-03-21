@@ -147,56 +147,57 @@ Variables are automatically classified according to the data found in them. Thes
     be specified with keyword arguments`binvars`, `catvars`, `npvars`, `paramvars` and 
     `cramvars`. These can be supplied with a vector of variable names or instead of one. 
 
-### Stratification variable 
-
-A single stratification variable can be given. As above, if no variable list is supplied, 
-    all other variables will be included in the table. You can also select which variables 
-    you want to include in the table. 
-
 ```jldoctest label
-julia> tableone(testdata, :Sex, [ :Treatment, :Age ]; npvars=:Age)
-5×4 DataFrame
- Row │ variablenames      M                F                 nmissing 
-     │ String             String           String            String   
-─────┼────────────────────────────────────────────────────────────────
-   1 │ n                  7                5
-   2 │ Treatment                                             0
-   3 │     A              3 (42.9)         3 (60.0)
-   4 │     B              4 (57.1)         2 (40.0)
-   5 │ Age: median [IQR]  13.3 [7.2–46.6]  27.2 [26.6–84.5]  0
+julia> tableone(testdata, [ :Treatment, :Age ]; npvars=:Age)
+5×3 DataFrame
+ Row │ variablenames      Total             nmissing 
+     │ String             String            String   
+─────┼───────────────────────────────────────────────
+   1 │ n                  12
+   2 │ Treatment                            0
+   3 │     A              6 (50.0)
+   4 │     B              6 (50.0)
+   5 │ Age: median [IQR]  26.9 [13.2–60.3]  0
 
-julia> tableone(testdata, :Sex; binvars=:Treatment)
-2×4 DataFrame
- Row │ variablenames  M         F         nmissing 
-     │ String         String    String    String   
-─────┼─────────────────────────────────────────────
-   1 │ n              7         5
-   2 │ Treatment: B   4 (57.1)  2 (40.0)  0
+julia> tableone(testdata; binvars=:Treatment, paramvars=:Age)
+3×3 DataFrame
+ Row │ variablenames   Total        nmissing 
+     │ String          String       String   
+─────┼───────────────────────────────────────
+   1 │ n               12
+   2 │ Treatment: B    6 (50.0)     0
+   3 │ Age: mean (sd)  36.3 (31.0)  0
 
-julia> tableone(testdata, :Sex; cramvars= [:Treatment ])
-2×4 DataFrame
- Row │ variablenames   M                F                nmissing 
-     │ String          String           String           String   
-─────┼────────────────────────────────────────────────────────────
-   1 │ n               7                5
-   2 │ Treatment: A/B  3/4 (42.9/57.1)  3/2 (60.0/40.0)  0
+julia> tableone(testdata; cramvars=[:Treatment ])
+2×3 DataFrame
+ Row │ variablenames   Total            nmissing 
+     │ String          String           String   
+─────┼───────────────────────────────────────────
+   1 │ n               12
+   2 │ Treatment: A/B  6/6 (50.0/50.0)  0
 ```
 
 Note that if you are combining the positional `vars` argument and the keyword arguments, any 
     variables not included in `vars` will be omitted from the table. 
 
 ```jldoctest label
-julia> tableone(testdata, :Sex, [ :Treatment, :Age ]; npvars=:MissMeasure)
-5×4 DataFrame
- Row │ variablenames   M            F            nmissing 
-     │ String          String       String       String   
-─────┼────────────────────────────────────────────────────
-   1 │ n               7            5
-   2 │ Treatment                                 0
-   3 │     A           3 (42.9)     3 (60.0)
-   4 │     B           4 (57.1)     2 (40.0)
-   5 │ Age: mean (sd)  27.9 (28.2)  48.2 (34.0)  0
+julia> tableone(testdata, [ :Treatment, :Age ]; npvars=:MissMeasure)
+5×3 DataFrame
+ Row │ variablenames   Total        nmissing 
+     │ String          String       String   
+─────┼───────────────────────────────────────
+   1 │ n               12
+   2 │ Treatment                    0
+   3 │     A           6 (50.0)
+   4 │     B           6 (50.0)
+   5 │ Age: mean (sd)  36.3 (31.0)  0
 ```
+
+### Stratification variable 
+
+A single stratification variable can be given. As above, if no variable list is supplied, 
+    all other variables will be included in the table. You can also select which variables 
+    you want to include in the table. 
 
 ```jldoctest label
 julia> tableone(testdata, "Treatment", [ "Age", "Sex" ])
@@ -219,6 +220,21 @@ julia> tableone(testdata, :Treatment, :Treatment)
    2 │ Treatment                            0
    3 │     A          6 (100.0)  0 (0.0)
    4 │     B          0 (0.0)    6 (100.0)
+```
+
+Totals are displayed with the `addtotal` argument 
+
+```jldoctest label
+julia> tableone(testdata, "Treatment", [ "Age", "Sex" ]; paramvars="Age", addtotal=true)
+5×5 DataFrame
+ Row │ variablenames   A            B            Total        nmissing 
+     │ String          String       String       String       String   
+─────┼─────────────────────────────────────────────────────────────────
+   1 │ n               6            6            12
+   2 │ Age: mean (sd)  40.1 (32.4)  32.6 (32.2)  36.3 (31.0)  0
+   3 │ Sex                                                    0
+   4 │     F           3 (50.0)     2 (33.3)     5 (41.7)
+   5 │     M           3 (50.0)     4 (66.7)     7 (58.3)
 ```
 
 Using default settings, any individual missing values in the stratification variable 
@@ -245,24 +261,30 @@ P-values to compare between the stratification levels can be calculated automati
     selecting `addtestname=true`.
 
 ```jldoctest label
-julia> tableone(testdata, :Sex; pvalues=true, addtestname=true)
-13×6 DataFrame
- Row │ variablenames           M            F            nmissing  p       test
-     │ String                  String       String       String    String  String
-─────┼─────────────────────────────────────────────────────────────────────────────────────
-   1 │ n                       7            5
-   2 │ Treatment                                         0         1.0     FisherExactTest
-   3 │     A                   3 (42.9)     3 (60.0)
-   4 │     B                   4 (57.1)     2 (40.0)
-   5 │ Age: mean (sd)          27.9 (28.2)  48.2 (34.0)  0         0.276   OneWayANOVATest
-   6 │ Cats                                              0         0.598   ChisqTest
-   7 │     X                   2 (28.6)     1 (20.0)
-   8 │     Y                   4 (57.1)     2 (40.0)
-   9 │     Z                   1 (14.3)     2 (40.0)
-  10 │ MissCats                                          4         1.0     FisherExactTest
-  11 │     U                   1 (20.0)     1 (33.3)
-  12 │     V                   4 (80.0)     2 (66.7)
-  13 │ MissMeasure: mean (sd)  0.6 (0.2)    0.5 (0.2)    2         0.605   OneWayANOVATest
+julia> tableone(
+           testdata, 
+           :Sex, 
+           [ :Treatment, :Age, :Cats, :MissCats, :MissMeasure ]; 
+           binvars=:Treatment, npvars=:MissMeasure, 
+           addnmissing=false, pvalues=true, addtestname=true
+       )
+┌ Warning: This test is only asymptotically correct and might be inaccurate for the given group size
+└ @ HypothesisTests C:\Users\mpritchard\.julia\packages\HypothesisTests\r322N\src\kruskal_wallis.jl:73
+11×5 DataFrame
+ Row │ variablenames              M              F              p       test
+     │ String                     String         String         String  String
+─────┼────────────────────────────────────────────────────────────────────────────────────
+   1 │ n                          7              5
+   2 │ Treatment: B               4 (57.1)       2 (40.0)       1.0     FisherExactTest
+   3 │ Age: mean (sd)             27.9 (28.2)    48.2 (34.0)    0.276   OneWayANOVATest
+   4 │ Cats                                                     0.598   ChisqTest
+   5 │     X                      2 (28.6)       1 (20.0)
+   6 │     Y                      4 (57.1)       2 (40.0)
+   7 │     Z                      1 (14.3)       2 (40.0)
+   8 │ MissCats                                                 1.0     FisherExactTest
+   9 │     U                      1 (20.0)       1 (33.3)
+  10 │     V                      4 (80.0)       2 (66.7)
+  11 │ MissMeasure: median [IQR]  0.6 [0.4–0.7]  0.6 [0.4–0.6]  0.569   KruskalWallisTest
 ```
 
 ## Categorical variables
@@ -282,7 +304,7 @@ julia> url = "http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv";
 julia> pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring = "NA");
 
 julia> edemaconversion = DataFrame(
-       edema = [ 0, .5, 1 ],
+       edema = [ 0, 0.5, 1 ],
        edemalevel = CategoricalArray([ 
             "No edema", 
             "Untreated or successfully treated", 
