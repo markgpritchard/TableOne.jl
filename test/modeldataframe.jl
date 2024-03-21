@@ -5,7 +5,6 @@ t1_F = [ "5", "3/2 (60.0/40.0)" ]
 t1_p = [ "", "1.0" ]
 t1_test = [ "", "FisherExactTest" ]
 
-
 t2variablenames = [ "n", "Hepatomegaly: 1" ]
 t2_1 = [ "158", "73 (46.2)" ]
 t2_2 = [ "154" , "87 (56.5)" ]

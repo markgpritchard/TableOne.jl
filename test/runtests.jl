@@ -49,6 +49,8 @@ pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring="NA")
 end
 
 @testset "Categorical arrays" begin
+    # Specific `CategoricalArray` functions not needed for binary outcomes. Tests retained to 
+    # confirm this.
     hepatocat = DataFrame(
         hepato = [ 0, 1],
         Hepatocat = CategoricalArray([ "Absent", "Present" ]; ordered=true)
