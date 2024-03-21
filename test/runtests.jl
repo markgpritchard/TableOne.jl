@@ -28,6 +28,26 @@ url = "http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"
 
 pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring="NA")
 
+@testset "p-values" begin 
+    t1 = tableone(
+        testdata, 
+        :Sex, 
+        [ :Treatment ]; 
+        cramvars=:Treatment, npvars=:MissMeasure, 
+        addnmissing=false, pvalues=true, addtestname=true
+    )
+
+    @testset for (vn, td) ∈ zip(
+        [ "variablenames", "M", "F", "p", "test" ], 
+        [ t1variablenames, t1_M, t1_F, t1_p, t1_test ]
+    )
+        vcol = getproperty(t1, Symbol(vn))
+        @testset for i ∈ 1:2 
+            @test vcol[i] == td[i] 
+        end
+    end
+end
+
 @testset "Categorical arrays" begin
     hepatocat = DataFrame(
         hepato = [ 0, 1],
@@ -36,7 +56,7 @@ pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring="NA")
     leftjoin!(pbcdata, hepatocat; on = :hepato, matchmissing=:notequal)
     levels!(pbcdata.Hepatocat, [ "Absent", "Present" ])
 
-    t1 = tableone(
+    t2 = tableone(
         pbcdata,
         :trt,
         [ "hepato" ];
@@ -47,14 +67,14 @@ pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring="NA")
         )
     )
 
-    @testset for (vn, td) ∈ zip([ "variablenames", "1", "2" ], [ t1variablenames, t1_1, t1_2 ])
-        vcol = getproperty(t1, Symbol(vn))
+    @testset for (vn, td) ∈ zip([ "variablenames", "1", "2" ], [ t2variablenames, t2_1, t2_2 ])
+        vcol = getproperty(t2, Symbol(vn))
         @testset for i ∈ 1:2 
             @test vcol[i] == td[i] 
         end
     end
 
-    t2 = tableone(
+    t3 = tableone(
         pbcdata,
         :trt,
         [ "hepato" ];
@@ -65,8 +85,8 @@ pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring="NA")
         )
     )
 
-    @testset for (vn, td) ∈ zip([ "variablenames", "1", "2" ], [ t2variablenames, t2_1, t2_2 ])
-        vcol = getproperty(t2, Symbol(vn))
+    @testset for (vn, td) ∈ zip([ "variablenames", "1", "2" ], [ t3variablenames, t3_1, t3_2 ])
+        vcol = getproperty(t3, Symbol(vn))
         @testset for i ∈ 1:2 
             @test vcol[i] == td[i] 
         end
