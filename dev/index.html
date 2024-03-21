@@ -1,46 +1,246 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>TableOne.jl · TableOne Documentation</title><meta name="title" content="TableOne.jl · TableOne Documentation"/><meta property="og:title" content="TableOne.jl · TableOne Documentation"/><meta property="twitter:title" content="TableOne.jl · TableOne Documentation"/><meta name="description" content="Documentation for TableOne Documentation."/><meta property="og:description" content="Documentation for TableOne Documentation."/><meta property="twitter:description" content="Documentation for TableOne Documentation."/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>TableOne Documentation</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>TableOne.jl</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>TableOne.jl</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>TableOne.jl</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/markgpritchard/TableOne.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/markgpritchard/TableOne.jl/blob/main/docs/src/index.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="TableOne.jl"><a class="docs-heading-anchor" href="#TableOne.jl">TableOne.jl</a><a id="TableOne.jl-1"></a><a class="docs-heading-anchor-permalink" href="#TableOne.jl" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="TableOne.tableone" href="#TableOne.tableone"><code>TableOne.tableone</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">tableone(data, strata[, vars]; &lt;keyword arguments&gt;)</code></pre><p>Produce a summary table which may be used as Table 1 in a manuscript.</p><p><strong>Arguments</strong></p><ul><li><code>data</code>: A <code>DataFrame</code> containing the data to be included in the table</li><li><code>strata</code>: The variable (a column in <code>data</code>) by which the data should be stratified    in the table</li><li><code>vars</code>: The variables to be listed in the table, defaults to <code>Symbol.(names(data))</code>    if not supplied</li></ul><p><strong>Keyword arguments</strong></p><p><strong>Types of variables</strong></p><p>Each of these must be supplied as the same type as <code>vars</code>, e.g. if <code>vars</code> is a <code>Vector{Symbol}</code>      then these should each be a <code>Vector{Symbol}</code>. Variables supplied to one of these      arguments but not the main <code>vars</code> argument will not be displayed.</p><ul><li><code>binvars</code>: binary variables – variable will take one row and show <strong>number (%)</strong>    with the selected level (see <code>binvardisplay</code> below)</li><li><code>catvars</code>: categorical variables – each level in the variable will be shown on    a separate line with the <strong>number (%)</strong> in that category</li><li><code>npvars</code>: non-parametric variables – will display <strong>median [1st–3rd quartiles]</strong></li></ul><p>Any variables not included in one of these arguments will be presented as      <code>mean (standard deviation)</code> if the contents of the variable are      <code>&lt;:Union{&lt;:Number, Missing}</code>, and as categorical otherwise.</p><p><strong>Additional keyword arguments</strong></p><ul><li><code>addnmissing = true</code>: include the numer of records with missing values for each    variable. If <code>true</code>, will also display number with missing <code>strata</code> values</li><li><code>addtotal = false</code>: include a column of totals across all <code>strata</code></li><li><code>binvardisplay = nothing</code>: optionally, a <code>Dict</code> to choose the level to display    for binary values. Any variables not listed will use the value chosen by <code>maximum(skipmissing(.))</code></li><li><code>digits = 1</code>: number of digits to be displayed after the decimal place in means,    standard deviations and percentages</li><li><code>includemissingintotal = false</code>: include records with missing stratification variable    in the totals column. This option has no effect if <code>addtotal == false</code></li><li><code>varnames = nothing</code>: optionally, a <code>Dict</code> of names for variables different    from the column titles in <code>data</code>, of the form <code>Dict(:columnname =&gt; &quot;name to print&quot;)</code>.    Any variables not included will be listed by the column name</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; using TableOne, CSV, DataFrames, Downloads
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>TableOne.jl · TableOne Documentation</title><meta name="title" content="TableOne.jl · TableOne Documentation"/><meta property="og:title" content="TableOne.jl · TableOne Documentation"/><meta property="twitter:title" content="TableOne.jl · TableOne Documentation"/><meta name="description" content="Documentation for TableOne Documentation."/><meta property="og:description" content="Documentation for TableOne Documentation."/><meta property="twitter:description" content="Documentation for TableOne Documentation."/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>TableOne Documentation</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>TableOne.jl</a><ul class="internal"><li><a class="tocitem" href="#Detailed-examples-of-useage"><span>Detailed examples of useage</span></a></li><li><a class="tocitem" href="#Categorical-variables"><span>Categorical variables</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>TableOne.jl</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>TableOne.jl</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/markgpritchard/TableOne.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/markgpritchard/TableOne.jl/blob/main/docs/src/index.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="TableOne.jl"><a class="docs-heading-anchor" href="#TableOne.jl">TableOne.jl</a><a id="TableOne.jl-1"></a><a class="docs-heading-anchor-permalink" href="#TableOne.jl" title="Permalink"></a></h1><p>This package is designed to summarize a dataset, for example information about participants      in a study as may be needed for <em>Table 1</em> of a manuscript. It exports one function,      <code>tableone</code>.</p><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="TableOne.tableone" href="#TableOne.tableone"><code>TableOne.tableone</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">tableone(data, strata[, vars]; &lt;keyword arguments&gt;)</code></pre><p>Produce a summary table which may be used as Table 1 in a manuscript.</p><p><strong>Arguments</strong></p><ul><li><code>data</code>: A <code>DataFrame</code> containing the data to be included in the table</li><li><code>strata</code>: The variable (a column in <code>data</code>) by which the data should be stratified    in the table</li><li><code>vars</code>: The variables to be listed in the table, defaults to <code>Symbol.(names(data))</code>    if not supplied</li></ul><p><strong>Keyword arguments</strong></p><p><strong>Types of variables</strong></p><p>Each of these must be supplied as the same type as <code>vars</code>, e.g. if <code>vars</code> is a <code>Vector{Symbol}</code>      then these should each be a <code>Vector{Symbol}</code>. Variables supplied to one of these      arguments but not the main <code>vars</code> argument will not be displayed.</p><ul><li><code>binvars</code>: binary variables – variable will take one row and show <strong>number (%)</strong>    with the selected level (see <code>binvardisplay</code> below)</li><li><code>catvars</code>: categorical variables – each level in the variable will be shown on    a separate line with the <strong>number (%)</strong> in that category</li><li><code>npvars</code>: non-parametric variables – will display <strong>median [1st–3rd quartiles]</strong></li><li><code>paramvars</code>: parametric variables – will display <strong>mean (standard deviation)</strong></li><li><code>cramvars</code>: a variation on <code>binvars</code> that displays both levels in one row on the table</li></ul><p>Any variables not included in one of these arguments will be presented as      <code>mean (standard deviation)</code> if the contents of the variable are      <code>&lt;:Union{&lt;:Number, Missing}</code>, and as categorical otherwise.</p><p><strong>Additional keyword arguments</strong></p><ul><li><code>addnmissing=true</code>: include the numer of records with missing values for each    variable. If <code>true</code>, will also display number with missing <code>strata</code> values</li><li><code>addtestname=false</code>: show the name of the statistical test used to calculate    p-values. This option has no effect unless <code>pvalues == true</code></li><li><code>addtotal=false</code>: include a column of totals across all <code>strata</code></li><li><code>binvardisplay=nothing</code>: optionally, a <code>Dict</code> to choose the level to display    for binary values. Any variables not listed will use the value chosen by    <code>maximum(skipmissing(.))</code></li><li><code>digits=1</code>: number of digits to be displayed after the decimal place in means,    standard deviations and percentages</li><li><code>includemissingintotal=false</code>: include records with missing stratification variable    in the totals column. This option has no effect if <code>addtotal == false</code></li><li><code>pdigits=3</code>: number of digits to be displayed after the decimal place for p-values</li><li><code>pvalues=false</code>: whether to display significant test p-values for each variable    in the table</li><li><code>varnames=nothing</code>: optionally, a <code>Dict</code> of names for variables different    from the column titles in <code>data</code>, of the form <code>Dict(:columnname =&gt; &quot;name to print&quot;)</code>.    Any variables not included will be listed by the column name</li></ul><p>See documentation for examples. ```</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/markgpritchard/TableOne.jl/blob/df653ac06e3ba4918c12e0d948cb4aeb688859ef/src/TableOne.jl#L12-L64">source</a></section></article><h2 id="Detailed-examples-of-useage"><a class="docs-heading-anchor" href="#Detailed-examples-of-useage">Detailed examples of useage</a><a id="Detailed-examples-of-useage-1"></a><a class="docs-heading-anchor-permalink" href="#Detailed-examples-of-useage" title="Permalink"></a></h2><h3 id="Mock-dataset-for-examples"><a class="docs-heading-anchor" href="#Mock-dataset-for-examples">Mock dataset for examples</a><a id="Mock-dataset-for-examples-1"></a><a class="docs-heading-anchor-permalink" href="#Mock-dataset-for-examples" title="Permalink"></a></h3><p>We create this dataset to use in the following examples.</p><pre><code class="language-julia-repl hljs">julia&gt; using DataFrames, StableRNGs
 
-julia&gt; # use the public PBC dataset
+julia&gt; rng = StableRNG(1729)
+StableRNGs.LehmerRNG(state=0x00000000000000000000000000000d83)
 
-julia&gt; pbcdata = CSV.read(
-    Downloads.download(&quot;http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv&quot;),
-    DataFrame;
-    missingstring = &quot;NA&quot;)
-[...]
+julia&gt; testdata = DataFrame(
+              Treatment = [ repeat([ &quot;A&quot; ], 6); repeat([ &quot;B&quot;], 6) ],
+              Age = 100 .* rand(rng, 12),
+              Sex = [ rand(rng) &lt;.5 ? &quot;F&quot; : &quot;M&quot; for _ ∈ 1:12 ],
+              Cats = [ rand(rng) &lt; .2 ? &quot;X&quot; : rand(rng) &lt; .6 ? &quot;Y&quot; : &quot;Z&quot; for _ ∈ 1:12 ],
+              MissCats = [ rand(rng) &lt; .3 ? missing : rand(rng) &lt; .4 ? &quot;U&quot; : &quot;V&quot; for _ ∈ 1:12 ],
+              MissMeasure = [ rand(rng) &lt; .2 ? missing : rand(rng) for _ ∈ 1:12 ])
+12×6 DataFrame
+ Row │ Treatment  Age        Sex     Cats    MissCats  MissMeasure    
+     │ String     Float64    String  String  String?   Float64?       
+─────┼────────────────────────────────────────────────────────────────
+   1 │ A          72.9422    M       Y       missing         0.292097
+   2 │ A          17.0639    F       Y       V               0.297467
+   3 │ A          27.2361    F       Z       missing         0.572896
+   4 │ A          37.168     M       X       U               0.722079
+   5 │ A           1.62378   M       X       missing         0.805181
+   6 │ A          84.4942    F       X       U         missing        
+   7 │ B          26.5527    F       Y       missing   missing        
+   8 │ B          12.8692    M       Y       V               0.611862
+   9 │ B          56.0895    M       Z       V               0.463648
+  10 │ B           0.951134  M       Y       V               0.187837
+  11 │ B          13.334     M       Y       V               0.770172
+  12 │ B          85.8527    F       Z       V               0.552469</code></pre><h3 id="Selecting-variables-for-the-table"><a class="docs-heading-anchor" href="#Selecting-variables-for-the-table">Selecting variables for the table</a><a id="Selecting-variables-for-the-table-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-variables-for-the-table" title="Permalink"></a></h3><p><code>tableone</code> takes three positional arguments: <code>data</code>, <code>strata</code> and <code>vars</code>. If only      <code>data</code> is supplied then all variables are summarized.</p><pre><code class="language-julia-repl hljs">julia&gt; using TableOne
+
+julia&gt; tableone(testdata)
+16×3 DataFrame
+ Row │ variablenames           Total        nmissing 
+     │ String                  String       String   
+─────┼───────────────────────────────────────────────
+   1 │ n                       12
+   2 │ Treatment                            0
+   3 │     A                   6 (50.0)
+   4 │     B                   6 (50.0)
+   5 │ Age: mean (sd)          36.3 (31.0)  0
+   6 │ Sex                                  0
+   7 │     F                   5 (41.7)
+   8 │     M                   7 (58.3)
+   9 │ Cats                                 0
+  10 │     X                   3 (25.0)
+  11 │     Y                   6 (50.0)
+  12 │     Z                   3 (25.0)
+  13 │ MissCats                             4
+  14 │     U                   2 (25.0)
+  15 │     V                   6 (75.0)
+  16 │ MissMeasure: mean (sd)  0.5 (0.2)    2</code></pre><p>This is equivalent to providing all variables in order.</p><pre><code class="language-julia-repl hljs">julia&gt; tableone(testdata, [ :Treatment, :Age, :Sex, :Cats, :MissCats, :MissMeasure ]) == tableone(testdata)
+true</code></pre><p>To change the order of variables and change the order they are displayed, pass a Vector of      variable names as Strings or Symbols.</p><pre><code class="language-julia-repl hljs">julia&gt; tableone(testdata, [ :Sex, :Age ])
+5×3 DataFrame
+ Row │ variablenames   Total        nmissing 
+     │ String          String       String   
+─────┼───────────────────────────────────────
+   1 │ n               12
+   2 │ Sex                          0
+   3 │     F           5 (41.7)
+   4 │     M           7 (58.3)
+   5 │ Age: mean (sd)  36.3 (31.0)  0
+
+julia&gt; tableone(testdata, [ &quot;Cats&quot; ])
+5×3 DataFrame
+ Row │ variablenames  Total     nmissing 
+     │ String         String    String   
+─────┼───────────────────────────────────
+   1 │ n              12
+   2 │ Cats                     0
+   3 │     X          3 (25.0)
+   4 │     Y          6 (50.0)
+   5 │     Z          3 (25.0)</code></pre><p>Note that if you provide a single variable as a String or Symbol, rather than as a Vector,      it will be interpretted as the stratification variable.</p><pre><code class="language-julia-repl hljs">julia&gt; tableone(testdata, :Cats)
+12×5 DataFrame
+ Row │ variablenames           Y            Z            X            nmissing 
+     │ String                  String       String       String       String   
+─────┼─────────────────────────────────────────────────────────────────────────
+   1 │ n                       6            3            3
+   2 │ Treatment                                                      0
+   3 │     A                   2 (33.3)     1 (33.3)     3 (100.0)
+   4 │     B                   4 (66.7)     2 (66.7)     0 (0.0)
+   5 │ Age: mean (sd)          24.0 (25.4)  56.4 (29.3)  41.1 (41.6)  0
+   6 │ Sex                                                            0
+   7 │     F                   2 (33.3)     2 (66.7)     1 (33.3)
+   8 │     M                   4 (66.7)     1 (33.3)     2 (66.7)
+   9 │ MissCats                                                       4
+  10 │     U                   0 (0.0)      0 (0.0)      2 (100.0)
+  11 │     V                   4 (100.0)    2 (100.0)    0 (0.0)
+  12 │ MissMeasure: mean (sd)  0.4 (0.2)    0.5 (0.1)    0.8 (0.1)    2</code></pre><p>Variables are automatically classified according to the data found in them. These can also      be specified with keyword arguments<code>binvars</code>, <code>catvars</code>, <code>npvars</code>, <code>paramvars</code> and      <code>cramvars</code>. These can be supplied with a vector of variable names or instead of one. </p><pre><code class="language-julia-repl hljs">julia&gt; tableone(testdata, [ :Treatment, :Age ]; npvars=:Age)
+5×3 DataFrame
+ Row │ variablenames      Total             nmissing 
+     │ String             String            String   
+─────┼───────────────────────────────────────────────
+   1 │ n                  12
+   2 │ Treatment                            0
+   3 │     A              6 (50.0)
+   4 │     B              6 (50.0)
+   5 │ Age: median [IQR]  26.9 [13.2–60.3]  0
+
+julia&gt; tableone(testdata; binvars=:Treatment, paramvars=:Age)
+3×3 DataFrame
+ Row │ variablenames   Total        nmissing 
+     │ String          String       String   
+─────┼───────────────────────────────────────
+   1 │ n               12
+   2 │ Treatment: B    6 (50.0)     0
+   3 │ Age: mean (sd)  36.3 (31.0)  0
+
+julia&gt; tableone(testdata; cramvars=[:Treatment ])
+2×3 DataFrame
+ Row │ variablenames   Total            nmissing 
+     │ String          String           String   
+─────┼───────────────────────────────────────────
+   1 │ n               12
+   2 │ Treatment: A/B  6/6 (50.0/50.0)  0</code></pre><p>Note that if you are combining the positional <code>vars</code> argument and the keyword arguments, any      variables not included in <code>vars</code> will be omitted from the table. </p><pre><code class="language-julia-repl hljs">julia&gt; tableone(testdata, [ :Treatment, :Age ]; npvars=:MissMeasure)
+5×3 DataFrame
+ Row │ variablenames   Total        nmissing 
+     │ String          String       String   
+─────┼───────────────────────────────────────
+   1 │ n               12
+   2 │ Treatment                    0
+   3 │     A           6 (50.0)
+   4 │     B           6 (50.0)
+   5 │ Age: mean (sd)  36.3 (31.0)  0</code></pre><h3 id="Stratification-variable"><a class="docs-heading-anchor" href="#Stratification-variable">Stratification variable</a><a id="Stratification-variable-1"></a><a class="docs-heading-anchor-permalink" href="#Stratification-variable" title="Permalink"></a></h3><p>A single stratification variable can be given. As above, if no variable list is supplied,      all other variables will be included in the table. You can also select which variables      you want to include in the table. </p><pre><code class="language-julia-repl hljs">julia&gt; tableone(testdata, &quot;Treatment&quot;, [ &quot;Age&quot;, &quot;Sex&quot; ])
+5×4 DataFrame
+ Row │ variablenames   A            B            nmissing 
+     │ String          String       String       String   
+─────┼────────────────────────────────────────────────────
+   1 │ n               6            6
+   2 │ Age: mean (sd)  40.1 (32.4)  32.6 (32.2)  0
+   3 │ Sex                                       0
+   4 │     F           3 (50.0)     2 (33.3)
+   5 │     M           3 (50.0)     4 (66.7)
+
+julia&gt; tableone(testdata, :Treatment, :Treatment)
+4×4 DataFrame
+ Row │ variablenames  A          B          nmissing 
+     │ String         String     String     String   
+─────┼───────────────────────────────────────────────
+   1 │ n              6          6
+   2 │ Treatment                            0
+   3 │     A          6 (100.0)  0 (0.0)
+   4 │     B          0 (0.0)    6 (100.0)</code></pre><p>Totals are displayed with the <code>addtotal</code> argument </p><pre><code class="language-julia-repl hljs">julia&gt; tableone(testdata, &quot;Treatment&quot;, [ &quot;Age&quot;, &quot;Sex&quot; ]; paramvars=&quot;Age&quot;, addtotal=true)
+5×5 DataFrame
+ Row │ variablenames   A            B            Total        nmissing 
+     │ String          String       String       String       String   
+─────┼─────────────────────────────────────────────────────────────────
+   1 │ n               6            6            12
+   2 │ Age: mean (sd)  40.1 (32.4)  32.6 (32.2)  36.3 (31.0)  0
+   3 │ Sex                                                    0
+   4 │     F           3 (50.0)     2 (33.3)     5 (41.7)
+   5 │     M           3 (50.0)     4 (66.7)     7 (58.3)</code></pre><p>Using default settings, any individual missing values in the stratification variable      are listed in the <em>n</em> row, then are omited from the remainder of the table.</p><pre><code class="language-julia-repl hljs">julia&gt; tableone(testdata, :MissCats, [ :Sex, :MissMeasure ])      
+5×4 DataFrame
+ Row │ variablenames           V          U          nmissing 
+     │ String                  String     String     String   
+─────┼────────────────────────────────────────────────────────
+   1 │ n                       6          2          4
+   2 │ Sex                                           0
+   3 │     F                   2 (33.3)   1 (50.0)
+   4 │     M                   4 (66.7)   1 (50.0)
+   5 │ MissMeasure: mean (sd)  0.5 (0.2)  0.7 (NaN)  1</code></pre><h3 id="P-values"><a class="docs-heading-anchor" href="#P-values">P-values</a><a id="P-values-1"></a><a class="docs-heading-anchor-permalink" href="#P-values" title="Permalink"></a></h3><p>P-values to compare between the stratification levels can be calculated automatically. Users      are advised to ensure they are happy with the methods used and the values calculated.     The method being used depends on the type of variable supplied. It is displayed by      selecting <code>addtestname=true</code>.</p><pre><code class="language-julia-repl hljs">julia&gt; tableone(
+           testdata, 
+           :Sex, 
+           [ :Treatment, :Age, :Cats, :MissCats, :MissMeasure ]; 
+           binvars=:Treatment, npvars=:MissMeasure, 
+           addnmissing=false, pvalues=true, addtestname=true
+       )
+┌ Warning: This test is only asymptotically correct and might be inaccurate for the given group size
+└ @ HypothesisTests yourpath.jl:73
+11×5 DataFrame
+ Row │ variablenames              M              F              p       test
+     │ String                     String         String         String  String
+─────┼────────────────────────────────────────────────────────────────────────────────────
+   1 │ n                          7              5
+   2 │ Treatment: B               4 (57.1)       2 (40.0)       1.0     FisherExactTest
+   3 │ Age: mean (sd)             27.9 (28.2)    48.2 (34.0)    0.276   OneWayANOVATest
+   4 │ Cats                                                     0.598   ChisqTest
+   5 │     X                      2 (28.6)       1 (20.0)
+   6 │     Y                      4 (57.1)       2 (40.0)
+   7 │     Z                      1 (14.3)       2 (40.0)
+   8 │ MissCats                                                 1.0     FisherExactTest
+   9 │     U                      1 (20.0)       1 (33.3)
+  10 │     V                      4 (80.0)       2 (66.7)
+  11 │ MissMeasure: median [IQR]  0.6 [0.4–0.7]  0.6 [0.4–0.6]  0.569   KruskalWallisTest</code></pre><h2 id="Categorical-variables"><a class="docs-heading-anchor" href="#Categorical-variables">Categorical variables</a><a id="Categorical-variables-1"></a><a class="docs-heading-anchor-permalink" href="#Categorical-variables" title="Permalink"></a></h2><p>Categorical variables are displayed with the name of the variable on one line, then the      names of each category on a separate line beneath. Each category displays the number of      individuals in that category and the percentage of non-missing within that column. </p><p>If a column in the data is formatted as a <code>CategoricalArray</code> then the levels in      that array will be shown in Table 1 as ordered in the array.</p><pre><code class="language-julia-repl hljs">julia&gt; using CategoricalArrays, CSV, Downloads 
+
+julia&gt; url = &quot;http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv&quot;;
+
+julia&gt; pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring = &quot;NA&quot;);
+
+julia&gt; edemaconversion = DataFrame(
+       edema = [ 0, 0.5, 1 ],
+       edemalevel = CategoricalArray([ 
+            &quot;No edema&quot;, 
+            &quot;Untreated or successfully treated&quot;, 
+            &quot;Unsuccessfully treated&quot; ]; 
+            ordered = true))
+3×2 DataFrame
+ Row │ edema    edemalevel
+     │ Float64  Cat…
+─────┼────────────────────────────────────────────
+   1 │     0.0  No edema
+   2 │     0.5  Untreated or successfully treated
+   3 │     1.0  Unsuccessfully treated
+
+julia&gt; leftjoin!(pbcdata, edemaconversion; on = :edema);
+
+julia&gt; levels!(
+           pbcdata.edemalevel, 
+           [ &quot;No edema&quot;, &quot;Untreated or successfully treated&quot;, &quot;Unsuccessfully treated&quot; ]
+       );
 
 julia&gt; tableone(
-    pbcdata,
-    :trt,
-    [ &quot;age&quot;, &quot;sex&quot;, &quot;hepato&quot;, &quot;edema&quot;, &quot;bili&quot;, &quot;chol&quot;, &quot;stage&quot; ];
-    binvars = [ &quot;sex&quot;, &quot;hepato&quot; ],
-    catvars = [ &quot;edema&quot;, &quot;stage&quot; ],
-    npvars = [ &quot;bili&quot;, &quot;chol&quot; ],
-    digits = 2,
-    binvardisplay = Dict(&quot;sex&quot; =&gt; &quot;f&quot;),
-    varnames = Dict(
-        &quot;age&quot; =&gt; &quot;Age, years&quot;,
-        &quot;hepato&quot; =&gt; &quot;Hepatomegaly&quot;, 
-        &quot;bili&quot; =&gt; &quot;Bilirubin: mg/dL&quot;, 
-        &quot;chol&quot; =&gt; &quot;Cholesterol: mg/dL&quot;
-    )
-)
-15×4 DataFrame
- Row │ variablenames                     1                     2                     nmissing 
-     │ String                            String                String                String   
-─────┼────────────────────────────────────────────────────────────────────────────────────────
-   1 │ n                                 158                   154                   106      
-   2 │ Age, years: mean (sd)             51.42 (11.01)         48.58 (9.96)          0
-   3 │ sex: f                            137 (86.71)           139 (90.26)           0
-   4 │ Hepatomegaly: 1                   73 (46.2)             87 (56.49)            0
-   5 │ edema                                                                         0
-   6 │     0.0                           132 (83.54)           131 (85.06)
-   7 │     0.5                           16 (10.13)            13 (8.44)
-   8 │     1.0                           10 (6.33)             10 (6.49)
-   9 │ Bilirubin: mg/dL: median [IQR]    1.4 [0.8–3.2]         1.3 [0.72–3.6]        0
-  10 │ Cholesterol: mg/dL: median [IQR]  315.5 [247.75–417.0]  303.5 [254.25–377.0]  28
-  11 │ stage                                                                         0
-  12 │     1                             12 (7.59)             4 (2.6)
-  13 │     2                             35 (22.15)            32 (20.78)
-  14 │     3                             56 (35.44)            64 (41.56)
-  15 │     4                             55 (34.81)            54 (35.06)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/markgpritchard/TableOne.jl/blob/692443d0065aa42abc1d8d5e7e83a66592cd8439/src/TableOne.jl#L8-L98">source</a></section></article></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Saturday 13 January 2024 08:57">Saturday 13 January 2024</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+           pbcdata,
+           :trt,
+           [ &quot;age&quot;, &quot;sex&quot;, &quot;hepato&quot;, &quot;edemalevel&quot;, &quot;bili&quot;, &quot;chol&quot;, &quot;stage&quot; ];
+           addnmissing=false,
+           binvars = [ &quot;sex&quot;, &quot;hepato&quot; ],
+           catvars = [ &quot;edemalevel&quot;, &quot;stage&quot; ],
+           npvars = [ &quot;bili&quot;, &quot;chol&quot; ],
+           digits = 2,
+           binvardisplay = Dict(&quot;sex&quot; =&gt; &quot;f&quot;),
+           varnames = Dict(
+               &quot;age&quot; =&gt; &quot;Age, years&quot;,
+               &quot;hepato&quot; =&gt; &quot;Hepatomegaly&quot;,
+               &quot;bili&quot; =&gt; &quot;Bilirubin, mg/dL&quot;,
+               &quot;chol&quot; =&gt; &quot;Cholesterol, mg/dL&quot;
+           )
+       )
+15×3 DataFrame
+ Row │ variablenames                      1                     2
+     │ String                             String                String
+─────┼───────────────────────────────────────────────────────────────────────────────
+   1 │ n                                  158                   154
+   2 │ Age, years: mean (sd)              51.42 (11.01)         48.58 (9.96)
+   3 │ sex: f                             137 (86.71)           139 (90.26)
+   4 │ Hepatomegaly: 1                    73 (46.2)             87 (56.49)
+   5 │ edemalevel
+   6 │     No edema                       132 (83.54)           131 (85.06)
+   7 │     Untreated or successfully tr…  16 (10.13)            13 (8.44)
+   8 │     Unsuccessfully treated         10 (6.33)             10 (6.49)
+   9 │ Bilirubin, mg/dL: median [IQR]     1.4 [0.8–3.2]         1.3 [0.72–3.6]
+  10 │ Cholesterol, mg/dL: median [IQR]   315.5 [247.75–417.0]  303.5 [254.25–377.0]
+  11 │ stage
+  12 │     1                              12 (7.59)             4 (2.6)
+  13 │     2                              35 (22.15)            32 (20.78)
+  14 │     3                              56 (35.44)            64 (41.56)
+  15 │     4                              55 (34.81)            54 (35.06)</code></pre></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Thursday 21 March 2024 13:01">Thursday 21 March 2024</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
