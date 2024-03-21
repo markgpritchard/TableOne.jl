@@ -260,7 +260,7 @@ P-values to compare between the stratification levels can be calculated automati
     The method being used depends on the type of variable supplied. It is displayed by 
     selecting `addtestname=true`.
 
-```jldoctest label
+```jldoctest label; filter = r"\@.*73"
 julia> tableone(
            testdata, 
            :Sex, 
@@ -269,7 +269,7 @@ julia> tableone(
            addnmissing=false, pvalues=true, addtestname=true
        )
 ┌ Warning: This test is only asymptotically correct and might be inaccurate for the given group size
-└ @ HypothesisTests C:\Users\mpritchard\.julia\packages\HypothesisTests\r322N\src\kruskal_wallis.jl:73
+└ @ HypothesisTests yourpath.jl:73
 11×5 DataFrame
  Row │ variablenames              M              F              p       test
      │ String                     String         String         String  String
