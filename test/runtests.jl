@@ -1,407 +1,98 @@
 
 using TableOne
 using Test
-using CSV, DataFrames, Downloads
+using CategoricalArrays, CSV, DataFrames, Downloads, Documenter, StableRNGs
 
 @testset "TableOne.jl" begin
 
-# Use publicly available PBC dataset to reproduce the table produced in R using CreateTableOne at
-# https://www.rdocumentation.org/packages/tableone/versions/0.13.2/topics/CreateTableOne
-pbcdata = CSV.read(
-    Downloads.download("http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"),
-    DataFrame; 
-    missingstring = "NA"
-)
+## Follow the code used in the documentation 
+
+Documenter.doctest(TableOne)
+
+## Funtions not currently tested in the documentation 
 
 # Load saved versions that tests compare against
 include("modeldataframe.jl")
 
-@testset "String variable names, 2 digits" begin
-    # Note that our package does not currently provide p-values or have the `cramVars`
-    # keyword. Also, we select `digits = 2`, which matches the R code for mean (sd)
-    # results, but provides greater precision in our table than in the example.
-    # We produce the table and compare it to a saved version that has been visually
-    # compared to the R output.
-    testtable_s2 = tableone(
-        pbcdata,
-        :trt,
-        [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema", 
-            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet", 
-            "protime", "stage" ];
-        binvars = [ "sex", "ascites", "hepato", "spiders" ], 
-        catvars = [ "status", "edema", "stage" ], 
-        npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ], 
-        addnmissing = false,
-        digits = 2, 
-        binvardisplay = Dict("sex" => "f")
+rng = StableRNG(1729)
+testdata = DataFrame(
+    Treatment = [ repeat([ "A" ], 6); repeat([ "B"], 6) ],
+    Age = 100 .* rand(rng, 12),
+    Sex = [ rand(rng) <.5 ? "F" : "M" for _ ∈ 1:12 ],
+    Cats = [ rand(rng) < .2 ? "X" : rand(rng) < .6 ? "Y" : "Z" for _ ∈ 1:12 ],
+    MissCats = [ rand(rng) < .3 ? missing : rand(rng) < .4 ? "U" : "V" for _ ∈ 1:12 ],
+    MissMeasure = [ rand(rng) < .2 ? missing : rand(rng) for _ ∈ 1:12 ]
+)
+
+url = "http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"
+
+pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring="NA")
+
+@testset "p-values" begin 
+    t1 = tableone(
+        testdata, 
+        :Sex, 
+        [ :Treatment ]; 
+        cramvars=:Treatment, npvars=:MissMeasure, 
+        addnmissing=false, pvalues=true, addtestname=true
     )
-    @testset "Compare column names to test data" begin
-        testtable_s2names = names(testtable_s2)
-        @testset for i ∈ eachindex(testtable_s2names)
-            @test testtable_s2names[i] == tablecolumnnames[i]
-        end
-    end
-    @testset "Compare variable names to test data" begin
-        @testset for i ∈ axes(testtable_s2, 1)
-            @test testtable_s2.variablenames[i] == variablenames[i]
-        end
-    end
-    @testset "Compare trt = 1 to test data" begin
-        @testset for i ∈ axes(testtable_s2, 1)
-            @test getproperty(testtable_s2, Symbol("1"))[i] == col1_2[i]
-        end
-    end
-    @testset "Compare trt = 2 to test data" begin
-        @testset for i ∈ axes(testtable_s2, 1)
-            @test getproperty(testtable_s2, Symbol("2"))[i] == col2_2[i]
-        end
-    end
-end # @testset "String variable names, 2 digits"
 
-@testset "Symbol variable names, 2 digits" begin
-    # Note that our package does not currently provide p-values or have the `cramVars`
-    # keyword. Also, we select `digits = 2`, which matches the R code for mean (sd)
-    # results, but provides greater precision in our table than in the example.
-    # We produce the table and compare it to a saved version that has been visually
-    # compared to the R output.
-    testtable_y2 = tableone(
-        pbcdata,
-        :trt,
-        [ :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema, 
-            :bili, :chol, :albumin, :copper, Symbol("alk.phos"), :ast, :trig, :platelet, 
-            :protime, :stage ];
-        binvars = [ :sex, :ascites, :hepato, :spiders ], 
-        catvars = [ :status, :edema, :stage ], 
-        npvars = [ :bili, :chol, :copper, Symbol("alk.phos"), :trig ], 
-        addnmissing = false,
-        digits = 2, 
-        binvardisplay = Dict(:sex => "f")
-    )  
-    @testset "Compare column names to test data" begin
-        testtable_y2names = names(testtable_y2)
-        @testset for i ∈ eachindex(testtable_y2names)
-            @test testtable_y2names[i] == tablecolumnnames[i]
-        end
-    end
-    @testset "Compare variable names to test data" begin
-        @testset for i ∈ axes(testtable_y2, 1)
-            @test testtable_y2.variablenames[i] == variablenames[i]
-        end
-    end
-    @testset "Compare trt = 1 to test data" begin
-        @testset for i ∈ axes(testtable_y2, 1)
-            @test getproperty(testtable_y2, Symbol("1"))[i] == col1_2[i]
-        end
-    end
-    @testset "Compare trt = 2 to test data" begin
-        @testset for i ∈ axes(testtable_y2, 1)
-            @test getproperty(testtable_y2, Symbol("2"))[i] == col2_2[i]
-        end
-    end
-end # @testset "Symbol variable names, 2 digits"
-
-@testset "Numbers missing" begin
-    # The top row of the table should show the number of records missing the stratification 
-    # variable. All subsequent rows should exclude those records and show the numbers 
-    # missing the variable described on that row. To test this, we use two separate 
-    # datasets, one including all records and one excluding those with the stratification 
-    # variable missing. All rows except the top one should be equal.
-    trtpresentdata = filter(:trt => x -> !ismissing(x), pbcdata)
-    # Difference in size between these is the number with missing :trt
-    nmissingtrt = size(pbcdata, 1) - size(trtpresentdata, 1)
-
-    testtable_s2_nm = tableone(
-        pbcdata,
-        :trt,
-        [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema", 
-            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet", 
-            "protime", "stage" ];
-        binvars = [ "sex", "ascites", "hepato", "spiders" ], 
-        catvars = [ "status", "edema", "stage" ], 
-        npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ], 
-        addnmissing = true,
-        digits = 2, 
-        binvardisplay = Dict("sex" => "f")
+    @testset for (vn, td) ∈ zip(
+        [ "variablenames", "M", "F", "p", "test" ], 
+        [ t1variablenames, t1_M, t1_F, t1_p, t1_test ]
     )
-    @test testtable_s2_nm.nmissing[1] == "$nmissingtrt"
-    # Adding number missing should not have changed anything else in the table 
-    @testset "Compare column names to test data" begin
-        testtable_s2_nmnames = names(testtable_s2_nm)
-        @testset for i ∈ eachindex(testtable_s2_nmnames)
-            @test testtable_s2_nmnames[i] == tablecolumnnames_nm[i]
-        end
-    end
-    @testset "Compare variable names to test data" begin
-        @testset for i ∈ axes(testtable_s2_nm, 1)
-            @test testtable_s2_nm.variablenames[i] == variablenames[i]
-        end
-    end
-    @testset "Compare trt = 1 to test data" begin
-        @testset for i ∈ axes(testtable_s2_nm, 1)
-            @test getproperty(testtable_s2_nm, Symbol("1"))[i] == col1_2[i]
-        end
-    end
-    @testset "Compare trt = 2 to test data" begin
-        @testset for i ∈ axes(testtable_s2_nm, 1)
-            @test getproperty(testtable_s2_nm, Symbol("2"))[i] == col2_2[i]
-        end
-    end
-
-    # The table made with trtpresentdata should have no records with missing :trt 
-    testtable_pd2_nm = tableone(
-        trtpresentdata,
-        :trt,
-        [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema", 
-            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet", 
-            "protime", "stage" ];
-        binvars = [ "sex", "ascites", "hepato", "spiders" ], 
-        catvars = [ "status", "edema", "stage" ], 
-        npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ], 
-        addnmissing = true,
-        digits = 2, 
-        binvardisplay = Dict("sex" => "f")
-    )
-    @test testtable_pd2_nm.nmissing[1] == ""
-
-    # After the initial row, the two tables should be equal
-    for tt ∈ [ testtable_s2_nm, testtable_pd2_nm ] 
-        filter!(:variablenames => x -> x != "n", tt) 
-    end 
-    @testset for col ∈ names(testtable_s2_nm) 
-        v_s2nm = getproperty(testtable_s2_nm, col)
-        v_pd2nm = getproperty(testtable_pd2_nm, col)
-        @testset for i ∈ axes(testtable_s2_nm, 1)
-            @test v_s2nm[i] == v_pd2nm[i]
-        end
-    end
-end # @testset "Add numbers missing"
-
-@testset "Add totals" begin
-
-    @testset "Include missing in total" begin
-        # This is not the default option for this function but is the default for 
-        # CreateTableOne so we can compare this function's output to that
-        testtable = tableone(
-            pbcdata,
-            :trt,
-            [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema",
-                "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet",
-                "protime", "stage" ];
-            binvars = [ "sex", "ascites", "hepato", "spiders" ],
-            catvars = [ "status", "edema", "stage" ],
-            npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ],
-            digits = 2,
-            binvardisplay = Dict("sex" => "f"), 
-            addtotal = true, 
-            includemissingintotal = true
-        )
-        @testset for i ∈ eachindex(modelcol_includemissingintotal)
-            @test testtable.Total[i] == modelcol_includemissingintotal[i]
-        end
-    end # @testset "Include missing in total"
-
-    @testset "Exclude missing in total" begin
-        # This is our default. We don't currently have an independent reference 
-        # for this column so simply test whether it has changed since version 0.1.0. 
-        # If it has changed we will need to understand why.
-        testtable = tableone(
-            pbcdata,
-            :trt,
-            [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema",
-                "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet",
-                "protime", "stage" ];
-            binvars = [ "sex", "ascites", "hepato", "spiders" ],
-            catvars = [ "status", "edema", "stage" ],
-            npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ],
-            addnmissing = false,
-            digits = 2,
-            binvardisplay = Dict("sex" => "f"), 
-            addtotal = true
-        )
-        @testset for i ∈ eachindex(modelcol_excludemissingintotal)
-            @test testtable.Total[i] == modelcol_excludemissingintotal[i]
-        end
-    end # @testset "Exclude missing in total"
-    
-end # @testset "Add totals"
-
-@testset "Binary variable display" begin
-    # The `binvardisplay` argument has been used in all other tests so here just 
-    # testing the default for sex 
-    testtable = tableone(
-        pbcdata,
-        :trt,
-        [ "sex" ];
-        binvars = [ "sex" ],
-        addnmissing = false,
-        digits = 2
-    )
-    @testset for col ∈ names(testtable) 
-        v = getproperty(testtable, col)
-        mv = getproperty(modelbinvartesttable, col)
-        @testset for i ∈ axes(modelbinvartesttable, 1)
-            @test v[i] == mv[i]
-        end
-    end
-end # @testset "Binary variable display" 
-
-@testset "Specified variable names" begin
-    # specify variable names for variables using `meanvariable`, `binvariable`, 
-    # `catvariable` and `npvariable`
-    testtable = tableone(
-        pbcdata,
-        :trt,
-        [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema",
-            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet",
-            "protime", "stage" ];
-        binvars = [ "sex", "ascites", "hepato", "spiders" ],
-        catvars = [ "status", "edema", "stage" ],
-        npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ],
-        addnmissing = false,
-        binvardisplay = Dict("sex" => "f"), 
-        digits = 2,
-        varnames = Dict(
-            "age" => "Age, years",
-            "hepato" => "Hepatomegaly",
-            "stage" => "Histologic stage",
-            "alk.phos" => "alkaline phosphotase"
-        )
-    )
-   # @test testtable == modeltesttable2
-    @testset for col ∈ names(testtable) 
-        v = getproperty(testtable, col)
-        mv = getproperty(modeltesttable2, col)
-        @testset for i ∈ axes(modeltesttable2, 1)
-            @test v[i] == mv[i]
-        end
-    end
-end # @testset "Specified variable names"
-
-@testset "Specified variable names" begin
-    # specify variable names for variables using `meanvariable`, `binvariable`, 
-    # `catvariable` and `npvariable`
-    testtable = tableone(
-        pbcdata,
-        :trt,
-        [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema",
-            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet",
-            "protime", "stage" ];
-        binvars = [ "sex", "ascites", "hepato", "spiders" ],
-        catvars = [ "status", "edema", "stage" ],
-        npvars = [ "bili", "chol", "copper", "alk.phos", "trig" ],
-        addnmissing = false,
-        binvardisplay = Dict("sex" => "f"), 
-        digits = 2,
-        varnames = Dict(
-            "age" => "Age, years",
-            "hepato" => "Hepatomegaly",
-            "stage" => "Histologic stage",
-            "alk.phos" => "alkaline phosphotase"
-        )
-    )
-   # @test testtable == modeltesttable2
-    @testset for col ∈ names(testtable) 
-        v = getproperty(testtable, col)
-        mv = getproperty(modeltesttable2, col)
-        @testset for i ∈ axes(modeltesttable2, 1)
-            @test v[i] == mv[i]
-        end
-    end
-end # @testset "Specified variable names"
-
-
-@testset "Use only a single variable" begin
-    t1 = testtable_y2 = tableone(pbcdata, :trt, [ :age ])  
-    t2 = testtable_y2 = tableone(pbcdata, :trt, :age)  
-    t3 = testtable_y2 = tableone(pbcdata, :trt, "age")  
-    @testset for col ∈ names(t1) 
-        v1 = getproperty(t1, col)
-        v2 = getproperty(t2, col)
-        v3 = getproperty(t3, col)
-        @testset for i ∈ axes(t1, 1)
-            @test v1[i] == v2[i]
-            @test v1[i] == v3[i]
-        end
-    end
-end # @testset "Use only a single variable"
-
-@testset "Single variables to keyword arguments" begin
-    t1 = tableone(pbcdata, :trt, [ :age, :sex, :bili, :stage ];
-        binvars = [ :sex ], catvars = [ :stage ], npvars = [ :bili ])  
-    t2 = tableone(pbcdata, :trt, [ :age, :sex, :bili, :stage ];
-        binvars = [ :sex ], catvars = :stage, npvars = [ :bili ])  
-    t3 = tableone(pbcdata, :trt, [ :age, :sex, :bili, :stage ];
-        binvars = :sex, catvars = :stage, npvars = :bili) 
-    t4 = tableone(pbcdata, :trt, [ "age", "sex", "bili", "stage" ];
-        binvars = [ "sex" ], catvars = [ "stage" ], npvars = [ "bili" ])  
-    t5 = tableone(pbcdata, :trt, [ "age", "sex", "bili", "stage" ];
-        binvars = [ "sex" ], catvars = "stage", npvars = [ "bili" ])  
-    t6 = tableone(pbcdata, :trt, [ "age", "sex", "bili", "stage" ];
-        binvars = "sex", catvars = "stage", npvars = "bili") 
-    @testset for col ∈ names(t1) 
-        v1 = getproperty(t1, col)
-        v2 = getproperty(t2, col)
-        v3 = getproperty(t3, col)
-        v4 = getproperty(t4, col)
-        v5 = getproperty(t5, col)
-        v6 = getproperty(t6, col)
-        @testset for i ∈ axes(t1, 1)
-            @test v1[i] == v2[i]
-            @test v1[i] == v3[i]
-            @test v1[i] == v4[i]
-            @test v1[i] == v5[i]
-            @test v1[i] == v6[i]
+        vcol = getproperty(t1, Symbol(vn))
+        @testset for i ∈ 1:2 
+            @test vcol[i] == td[i] 
         end
     end
 end
 
-@testset "Select all variables" begin
-    testtable1 = tableone(
+@testset "Categorical arrays" begin
+    # Specific `CategoricalArray` functions not needed for binary outcomes. Tests retained to 
+    # confirm this.
+    hepatocat = DataFrame(
+        hepato = [ 0, 1],
+        Hepatocat = CategoricalArray([ "Absent", "Present" ]; ordered=true)
+    )
+    leftjoin!(pbcdata, hepatocat; on = :hepato, matchmissing=:notequal)
+    levels!(pbcdata.Hepatocat, [ "Absent", "Present" ])
+
+    t2 = tableone(
         pbcdata,
         :trt,
-        # variables must be in same order as the DataFrame
-        [ :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema ]
-    )  
-    tempdf = select(pbcdata, :trt, :time, :status, :age, :sex, :ascites, :hepato, :spiders, :edema)
-    testtable2 = tableone(tempdf, :trt)
-    @testset for col ∈ names(testtable1) 
-        v1 = getproperty(testtable1, col)
-        v2 = getproperty(testtable2, col)
-        @testset for i ∈ axes(testtable1, 1)
-            @test v1[i] == v2[i]
+        [ "hepato" ];
+        addnmissing=false,
+        binvars = [ "hepato" ],
+        varnames = Dict(
+            "hepato" => "Hepatomegaly",
+        )
+    )
+
+    @testset for (vn, td) ∈ zip([ "variablenames", "1", "2" ], [ t2variablenames, t2_1, t2_2 ])
+        vcol = getproperty(t2, Symbol(vn))
+        @testset for i ∈ 1:2 
+            @test vcol[i] == td[i] 
+        end
+    end
+
+    t3 = tableone(
+        pbcdata,
+        :trt,
+        [ "hepato" ];
+        addnmissing=false,
+        cramvars = [ "hepato" ],
+        varnames = Dict(
+            "hepato" => "Hepatomegaly",
+        )
+    )
+
+    @testset for (vn, td) ∈ zip([ "variablenames", "1", "2" ], [ t3variablenames, t3_1, t3_2 ])
+        vcol = getproperty(t3, Symbol(vn))
+        @testset for i ∈ 1:2 
+            @test vcol[i] == td[i] 
         end
     end
 end
 
-@testset "Identify categorical variables automatically" begin
-    # use synthetic data 
-    df = DataFrame(
-        :id => collect(1:1:20),
-        :trt => [ repeat([ "A" ], 10); repeat([ "B" ], 10) ],
-        :num => rand(20),
-        :cats => [ repeat([ "X", "Y" ], 5); repeat([ "Z" ], 10) ]
-    )
-    testtable1 = tableone(df, :trt, [ :num, :cats ]; catvars = :cats)
-    testtable2 = tableone(df, :trt, [ :num, :cats ])
-    @testset for col ∈ names(testtable1) 
-        v1 = getproperty(testtable1, col)
-        v2 = getproperty(testtable2, col)
-        @testset for i ∈ axes(testtable1, 1)
-            @test v1[i] == v2[i]
-        end
-    end
-end # @testset "Identify categorical variables automatically" 
-
-@testset "Undefined keywords" begin
-    # Any undefined keywords should generate an error
-    @test_throws MethodError tableone(
-        pbcdata,
-        :trt,
-        [ "time", "status", "age", "sex", "ascites", "hepato", "spiders", "edema",
-            "bili", "chol", "albumin", "copper", "alk.phos", "ast", "trig", "platelet",
-            "protime", "stage" ];
-        nparms = [ "bili", "chol", "copper", "alk.phos", "trig" ],
-    )
-end # @testset "Undefined keywords"
-
-end # @testset "TableOne.jl"
+end  # @testset "TableOne.jl" 
