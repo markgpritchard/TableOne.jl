@@ -1,9 +1,15 @@
 
 using TableOne
 using Test
-using CSV, DataFrames, Downloads
+using CSV, DataFrames, Downloads, Documenter
 
 @testset "TableOne.jl" begin
+
+# Follow the code used in the documentation 
+
+Documenter.doctest(TableOne)
+
+#=
 
 # Use publicly available PBC dataset to reproduce the table produced in R using CreateTableOne at
 # https://www.rdocumentation.org/packages/tableone/versions/0.13.2/topics/CreateTableOne
@@ -893,5 +899,5 @@ end
         nparms = [ "bili", "chol", "copper", "alk.phos", "trig" ],
     )
 end # @testset "Undefined keywords"
-
+=#
 end # @testset "TableOne.jl"
