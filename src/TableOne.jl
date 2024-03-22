@@ -33,7 +33,7 @@ Each of these must be supplied as the same type as `vars`, e.g. if `vars` is a `
     a separate line with the **number (%)** in that category
 * `npvars`: non-parametric variables – will display **median [1st–3rd quartiles]**
 * `paramvars`: parametric variables – will display **mean (standard deviation)**
-* `cramvars`: a variation on `binvars` that displays both levels in one row on the table
+* `cramvars`: a variation of `binvars` that displays both levels in one row on the table
 
 Any variables not included in one of these arguments will be presented as 
     `mean (standard deviation)` if the contents of the variable are 
@@ -60,7 +60,6 @@ Any variables not included in one of these arguments will be presented as
     Any variables not included will be listed by the column name
 
 See documentation for examples.
-```
 """
 function tableone(data, strata, vars::Vector; kwargs...) 
     stratanames = collect(skipmissing(unique(getproperty(data, strata))))       
