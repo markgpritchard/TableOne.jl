@@ -3,25 +3,21 @@
 [![Build Status](https://github.com/markgpritchard/TableOne.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/markgpritchard/TableOne.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![codecov](https://codecov.io/gh/markgpritchard/TableOne.jl/graph/badge.svg?token=2FWXZYCS0I)](https://codecov.io/gh/markgpritchard/TableOne.jl)
 
-Package to produce a summary table which may be used as Table 1 in a manuscript. Functions are supplied to give equivalence to the R package `tableone` by Kazuki Yoshida.
+Package to produce a summary table which may be used as Table 1 in a manuscript. Functions 
+    are supplied to give equivalence to the R package `tableone` by Kazuki Yoshida.
 
-Version 0.2 contains all the functionality I currently plan to add. Please let me know if there is anything you think should be added, either as an *Issue* or a *Pull request*. 
-
-Also, please let me know if you use the package, if it works well for you and if there are any problems.
 
 # Installation
 
 ```julia
-julia> using Pkg
-
-julia> Pkg.add("TableOne")
+julia> using Pkg; Pkg.add("TableOne")
 
 julia> using TableOne
 ```
 
 # Example use 
 
-The only exported function is `tableone`. Documentation for this function is available at https://markgpritchard.github.io/TableOne.jl/.
+The only exported function is `tableone`. 
 
 We use a publicly available Primary Biliary Cholangitis dataset to create an example Table 1.
 ```julia
@@ -69,3 +65,12 @@ julia> tableone(
   14 │     3                             56 (35.44)            64 (41.56)
   15 │     4                             55 (34.81)            54 (35.06)
 ```
+
+More examples are given in the documentation at https://docs.juliahub.com/General/TableOne/stable/.
+
+# Issues and new features 
+
+Please let me know if you use this package, if it works well for you and if there are any problems. 
+
+Version 0.2 contains all the functionality I currently plan to add. Please let me know if 
+    there is anything you think should be added, either as an *Issue* or a *Pull request*. 
