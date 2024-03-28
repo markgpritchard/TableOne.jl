@@ -18,7 +18,7 @@ This package is designed to summarize a dataset, for example information about p
 tableone
 ```
 
-## Detailed examples of useage 
+## Detailed examples of usage 
 
 ### Mock dataset for examples 
 

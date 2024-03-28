@@ -33,7 +33,7 @@ Each of these must be supplied as the same type as `vars`, e.g. if `vars` is a `
     a separate line with the **number (%)** in that category
 * `npvars`: non-parametric variables – will display **median [1st–3rd quartiles]**
 * `paramvars`: parametric variables – will display **mean (standard deviation)**
-* `cramvars`: a variation on `binvars` that displays both levels in one row on the table
+* `cramvars`: a variation of `binvars` that displays both levels in one row on the table
 
 Any variables not included in one of these arguments will be presented as 
     `mean (standard deviation)` if the contents of the variable are 
@@ -60,7 +60,6 @@ Any variables not included in one of these arguments will be presented as
     Any variables not included will be listed by the column name
 
 See documentation for examples.
-```
 """
 function tableone(data, strata, vars::Vector; kwargs...) 
     stratanames = collect(skipmissing(unique(getproperty(data, strata))))       
@@ -582,12 +581,17 @@ function _getvarname(var, varnames::Dict)
 end
 
 function _addnmissing!(_t, varvect, strataids)
-    idmissing = findall(ismissing, varvect)
-    vectorcountmissing = findall(x -> x ∈ idmissing, strataids[:Total])
-    n = length(vectorcountmissing)
+    n = _countmissing(varvect, strataids)
     nmissing = [ "" for _ ∈ axes(_t, 1) ]
     nmissing[1] = sprint(show, n)
     insertcols!(_t, :nmissing => nmissing)
+end
+
+function _countmissing(varvect, strataids, sn=:Total)
+    idmissing = findall(ismissing, varvect)
+    vectorcountmissing = findall(x -> x ∈ idmissing, strataids[Symbol(sn)])
+    n = length(vectorcountmissing)
+    return n 
 end
 
 _binvariabledisplay(v, varvect, binvardisplay::Nothing) = maximum(skipmissing(unique(varvect)))
