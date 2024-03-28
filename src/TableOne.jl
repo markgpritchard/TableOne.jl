@@ -581,13 +581,13 @@ function _getvarname(var, varnames::Dict)
 end
 
 function _addnmissing!(_t, varvect, strataids)
-    n = _countmissing(varvect)
+    n = _countmissing(varvect, strataids)
     nmissing = [ "" for _ ∈ axes(_t, 1) ]
     nmissing[1] = sprint(show, n)
     insertcols!(_t, :nmissing => nmissing)
 end
 
-function _countmissing(varvect, sn=:Total)
+function _countmissing(varvect, strataids, sn=:Total)
     idmissing = findall(ismissing, varvect)
     vectorcountmissing = findall(x -> x ∈ idmissing, strataids[Symbol(sn)])
     n = length(vectorcountmissing)
