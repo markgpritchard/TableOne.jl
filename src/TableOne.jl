@@ -70,11 +70,14 @@ end
 tableone(data, vars::Vector; kwargs...) = tableone(data, nothing, vars; kwargs...)
 tableone(data; kwargs...) = tableone(data, nothing; kwargs...)
 
-function tableone(data, ::Nothing, vars::Vector; addtotal=true, kwargs...) 
+function tableone(
+    data, ::Nothing, vars::Vector; 
+    addtotal=true, includemissingintotal=true, kwargs...
+) 
     stratanames = String[ ]      
     return _tableone(
         data, nothing, vars, stratanames; 
-        addtotal, includemissingintotal=true, kwargs...
+        addtotal, includemissingintotal, kwargs...
     )
 end
 
