@@ -68,14 +68,16 @@ end
 
 # If no strata supplied, default to showing totals column only
 tableone(data, vars::Vector; kwargs...) = tableone(data, nothing, vars; kwargs...)
-
 tableone(data; kwargs...) = tableone(data, nothing; kwargs...)
 
-function tableone(data, strata::Nothing, vars::Vector; addtotal=true, kwargs...) 
+function tableone(
+    data, ::Nothing, vars::Vector; 
+    addtotal=true, includemissingintotal=true, kwargs...
+) 
     stratanames = String[ ]      
     return _tableone(
-        data, strata, vars, stratanames; 
-        addtotal, includemissingintotal=true, kwargs...
+        data, nothing, vars, stratanames; 
+        addtotal, includemissingintotal, kwargs...
     )
 end
 
@@ -111,13 +113,11 @@ function _tableone(
             ids = findall(!ismissing, getproperty(data, strata))
             push!(strataids, :Total => ids)
         end 
-
         if addtotal 
             ids = strataids[:Total]
             n = length(ids)
             insertcols!(table1, :Total => [ "$n" ]) 
         end
-
         if addnmissing 
             if addtotal && includemissingintotal 
                 # then all records are included in the `Total` column so nothing is missing
@@ -159,9 +159,7 @@ function _tableone_novars(
 end
 
 function _tableone_novars(
-    data, strata, 
-    binvars::Nothing, catvars::Nothing, npvars::Nothing, 
-    paramvars::Nothing, cramvars::Nothing; 
+    data, strata, ::Nothing, ::Nothing, ::Nothing, ::Nothing, ::Nothing; 
     kwargs...
 )
     alldfvars = Symbol.(names(data))
@@ -203,9 +201,9 @@ function _tableone_novars(
     )
 end
 
-__tableone_novars_var(var::Nothing, S) = S[ ] 
-__tableone_novars_var(var, S) = [ var ] 
-__tableone_novars_var(var::AbstractVector, S) = var 
+__tableone_novars_var(::Nothing, S) = S[ ] 
+__tableone_novars_var(var, ::Any) = [ var ] 
+__tableone_novars_var(var::AbstractVector, ::Any) = var 
 
 # Variables can be listed as Symbols or Strings, but need to be consistent. Functions 
 # to check this consistency and make sure all lists are vectors
@@ -330,25 +328,21 @@ function ___catvariable(
         ids = strataids[Symbol(sn)]
         _catvariable!(_t, varvect, levels, ids, sn, pmatrix, i; kwargs...)
     end
-    
     if addtotal 
         ids = strataids[:Total]
         _catvariable!(_t, varvect, levels, ids, "Total", nothing, nothing; kwargs...)
     end
-    
+
     if addnmissing _addnmissing!(_t, varvect, strataids) end
-    
     _addcatpvalue!(_t, pmatrix; kwargs...)
     return _t
 end
 
 function _catvariable!(_t::DataFrame, varvect, levels, stratumids, sn, pmatrix, i; kwargs...) 
     estimates::Vector{String} = [ "" ]
-    
     for (j, lev) ∈ enumerate(levels) 
         __catvariable!(estimates, varvect, lev, stratumids, pmatrix, i, j; kwargs...)
     end
-    
     insertcols!(_t, Symbol(sn) => estimates)
 end
 
@@ -429,7 +423,7 @@ end
 
 function _npvariable!(_t, varvect, ids, sn; digits=1, kwargs...)
     med = median(skipmissing(varvect[ids]))
-    iqr = quantile(skipmissing(varvect[ids]), [.25, .75])
+    iqr = quantile(skipmissing(varvect[ids]), [ 0.25, 0.75 ])
     _med = "$(sprint(show, round(med; digits)))" 
     _iqr = "$(sprint(show, round(iqr[1]; digits)))–$(sprint(show, round(iqr[2]; digits)))"
     estimates::Vector{String} = [ "$_med [$_iqr]" ]
@@ -542,7 +536,6 @@ function _contvariable(
     else       
         pvectors = nothing 
     end
-
     return _contvariable(
         addfn, pfn, strata, stratanames, strataids, varvect, varname, pvectors; 
         kwargs...
@@ -570,7 +563,7 @@ function _contvariable(
     return _t
 end
 
-_getvarname(var, varnames::Nothing) = String(var)
+_getvarname(var, ::Nothing) = String(var)
 
 function _getvarname(var, varnames::Dict)
     if var ∈ keys(varnames) 
@@ -594,7 +587,7 @@ function _countmissing(varvect, strataids, sn=:Total)
     return n 
 end
 
-_binvariabledisplay(v, varvect, binvardisplay::Nothing) = maximum(skipmissing(unique(varvect)))
+_binvariabledisplay(::Any, varvect, ::Nothing) = maximum(skipmissing(unique(varvect)))
 
 function _binvariabledisplay(v, varvect, binvardisplay::Dict)
     if v ∈ keys(binvardisplay) 
@@ -604,23 +597,18 @@ function _binvariabledisplay(v, varvect, binvardisplay::Dict)
     end 
 end
 
-_catvarpmatrix!(pmatrix::Nothing, n, i, j) = nothing
+_catvarpmatrix!(::Nothing, ::Any, ::Any, ::Any) = nothing
 _catvarpmatrix!(pmatrix::Matrix{<:Integer}, n::Int, i::Int, j::Int) = pmatrix[j, i] = n
-_contpvectors!(pvectors::Nothing, newvect) = nothing 
+_contpvectors!(::Nothing, ::Any) = nothing 
 _contpvectors!(pvectors::Vector, newvect) = push!(pvectors, newvect)
-_addcatpvalue!(_t, pmatrix::Nothing; kwargs...) = nothing
+_addcatpvalue!(::Any, ::Nothing; kwargs...) = nothing
 
 function _addcatpvalue!(_t, pmatrix::Matrix{<:Integer}; kwargs...)
     @unpack p, testname = _catpvalue(pmatrix)
     _addpvalue!(_t, p, testname; kwargs...)
 end
 
-function _addbinpvalue!(
-    _t, pmatrix::Nothing, stratanames, strataids, varvect, level; 
-    kwargs...
-) 
-    return nothing
-end
+_addbinpvalue!(::Any, ::Nothing, ::Any, ::Any, ::Any, ::Any; kwargs...) = nothing
 
 function _addbinpvalue!(
     _t, pmatrix::Matrix{<:Integer}, stratanames, strataids, varvect, level; 
@@ -631,12 +619,11 @@ function _addbinpvalue!(
         @unpack n, denom = _catvalues(varvect, level, stratumids)
         pmatrix[2, i] = denom - n
     end
-    
     @unpack p, testname = _catpvalue(pmatrix)
     _addpvalue!(_t, p, testname; kwargs...)
 end
 
-_addcontpvalue!(_t, func, pvectors::Nothing; kwargs...) = nothing
+_addcontpvalue!(::Any, ::Any, ::Nothing; kwargs...) = nothing
 
 function _addcontpvalue!(_t, func, pvectors; kwargs...)
     p = pvalue(func(pvectors...))
@@ -647,7 +634,6 @@ function _addpvalue!(_t, p, testname; addtestname, pdigits, kwargs...)
     pcol = [ "" for _ ∈ axes(_t, 1) ]
     pcol[1] = "$(sprint(show, round(p; digits = pdigits)))"
     insertcols!(_t, :p => pcol)
-    
     if addtestname _addtestname!(_t, testname) end
 end
 
@@ -662,7 +648,6 @@ function _addtestname!(_t, testname::AbstractString)
     else 
         tn = testname 
     end
-    
     tncol = [ "" for _ ∈ axes(_t, 1) ]
     tncol[1] = tn 
     insertcols!(_t, :test => tncol)
@@ -676,7 +661,6 @@ function _catpvalue(pmatrix)
         p = pvalue(ChisqTest(pmatrix)) 
         testname = ChisqTest
     end
-    
     return ( p=p, testname=testname )
 end
 
