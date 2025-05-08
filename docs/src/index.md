@@ -276,7 +276,7 @@ julia> tableone(
 ─────┼────────────────────────────────────────────────────────────────────────────────────
    1 │ n                          7              5
    2 │ Treatment: B               4 (57.1)       2 (40.0)       1.0     FisherExactTest
-   3 │ Age: mean (sd)             27.9 (28.2)    48.2 (34.0)    0.276   OneWayANOVATest
+   3 │ Age: mean (sd)             27.9 (28.2)    48.2 (34.0)    0.282   OneWayANOVATest
    4 │ Cats                                                     0.598   ChisqTest
    5 │     X                      2 (28.6)       1 (20.0)
    6 │     Y                      4 (57.1)       2 (40.0)

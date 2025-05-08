@@ -1,7 +1,7 @@
 name = "TableOne"
 uuid = "d36ae967-72a8-4ff4-a661-f51e671fe83a"
 authors = ["Mark Pritchard <mark.pritchard@ndm.ox.ac.uk>"]
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -19,7 +19,7 @@ TableOneCategoricalVariables = "CategoricalArrays"
 [compat]
 CategoricalArrays = "0.8, 0.9, 0.10"
 DataFrames = "1"
-HypothesisTests = "0.10, 0.11"
+HypothesisTests = "0.11.4"
 PackageExtensionCompat = "1"
 StableRNGs = "1"
 StatsBase = "0.33, 0.34"

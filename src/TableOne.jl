@@ -1,7 +1,12 @@
 
 module TableOne
 
-using DataFrames, HypothesisTests, PackageExtensionCompat, StatsBase, UnPack
+using DataFrames: DataFrame, insertcols!
+using HypothesisTests: ChisqTest, FisherExactTest, KruskalWallisTest, OneWayANOVATest
+using HypothesisTests: pvalue
+using PackageExtensionCompat: @require_extensions
+using StatsBase: mean, median, quantile, std
+using UnPack: @unpack
 
 export tableone
 
