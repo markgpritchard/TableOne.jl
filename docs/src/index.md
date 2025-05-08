@@ -299,7 +299,7 @@ If a column in the data is formatted as a `CategoricalArray` then the levels in
 ```jldoctest label
 julia> using CategoricalArrays, RDatasets
 
-julia> pbcdata = dataset("survival", "pbc");
+julia> pbcdata = RDatasets.dataset("survival", "pbc");
 
 julia> edemaconversion = DataFrame(
        Edema = [ 0, 0.5, 1 ],
