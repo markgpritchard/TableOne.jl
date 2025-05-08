@@ -1,7 +1,11 @@
 
+using CategoricalArrays
+using DataFrames
+using Documenter
+using RDatasets
+using StableRNGs
 using TableOne
 using Test
-using CategoricalArrays, CSV, DataFrames, Downloads, Documenter, StableRNGs
 
 @testset "TableOne.jl" begin
 
@@ -24,9 +28,7 @@ testdata = DataFrame(
     MissMeasure = [ rand(rng) < .2 ? missing : rand(rng) for _ ∈ 1:12 ]
 )
 
-url = "http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"
-
-pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring="NA")
+pbcdata = dataset("survival", "pbc")
 
 @testset "p-values" begin 
     t1 = tableone(
@@ -52,20 +54,20 @@ end
     # Specific `CategoricalArray` functions not needed for binary outcomes. Tests retained to 
     # confirm this.
     hepatocat = DataFrame(
-        hepato = [ 0, 1],
+        Hepato = [ 0, 1],
         Hepatocat = CategoricalArray([ "Absent", "Present" ]; ordered=true)
     )
-    leftjoin!(pbcdata, hepatocat; on = :hepato, matchmissing=:notequal)
+    leftjoin!(pbcdata, hepatocat; on = :Hepato, matchmissing=:notequal)
     levels!(pbcdata.Hepatocat, [ "Absent", "Present" ])
 
     t2 = tableone(
         pbcdata,
-        :trt,
-        [ "hepato" ];
+        :Trt,
+        [ "Hepato" ];
         addnmissing=false,
-        binvars = [ "hepato" ],
+        binvars = [ "Hepato" ],
         varnames = Dict(
-            "hepato" => "Hepatomegaly",
+            "Hepato" => "Hepatomegaly",
         )
     )
 
@@ -78,12 +80,12 @@ end
 
     t3 = tableone(
         pbcdata,
-        :trt,
-        [ "hepato" ];
+        :Trt,
+        [ "Hepato" ];
         addnmissing=false,
-        cramvars = [ "hepato" ],
+        cramvars = [ "Hepato" ],
         varnames = Dict(
-            "hepato" => "Hepatomegaly",
+            "Hepato" => "Hepatomegaly",
         )
     )
 
