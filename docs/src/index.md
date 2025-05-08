@@ -276,7 +276,7 @@ julia> tableone(
 ─────┼────────────────────────────────────────────────────────────────────────────────────
    1 │ n                          7              5
    2 │ Treatment: B               4 (57.1)       2 (40.0)       1.0     FisherExactTest
-   3 │ Age: mean (sd)             27.9 (28.2)    48.2 (34.0)    0.276   OneWayANOVATest
+   3 │ Age: mean (sd)             27.9 (28.2)    48.2 (34.0)    0.282   OneWayANOVATest
    4 │ Cats                                                     0.598   ChisqTest
    5 │     X                      2 (28.6)       1 (20.0)
    6 │     Y                      4 (57.1)       2 (40.0)
@@ -297,49 +297,47 @@ If a column in the data is formatted as a `CategoricalArray` then the levels in
     that array will be shown in Table 1 as ordered in the array.
 
 ```jldoctest label
-julia> using CategoricalArrays, CSV, Downloads 
+julia> using CategoricalArrays, RDatasets
 
-julia> url = "http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv";
-
-julia> pbcdata = CSV.read(Downloads.download(url), DataFrame; missingstring = "NA");
+julia> pbcdata = dataset("survival", "pbc");
 
 julia> edemaconversion = DataFrame(
-       edema = [ 0, 0.5, 1 ],
-       edemalevel = CategoricalArray([ 
+       Edema = [ 0, 0.5, 1 ],
+       Edemalevel = CategoricalArray([ 
             "No edema", 
             "Untreated or successfully treated", 
             "Unsuccessfully treated" ]; 
             ordered = true))
 3×2 DataFrame
- Row │ edema    edemalevel
+ Row │ Edema    Edemalevel
      │ Float64  Cat…
 ─────┼────────────────────────────────────────────
    1 │     0.0  No edema
    2 │     0.5  Untreated or successfully treated
    3 │     1.0  Unsuccessfully treated
 
-julia> leftjoin!(pbcdata, edemaconversion; on = :edema);
+julia> leftjoin!(pbcdata, edemaconversion; on = :Edema);
 
 julia> levels!(
-           pbcdata.edemalevel, 
+           pbcdata.Edemalevel, 
            [ "No edema", "Untreated or successfully treated", "Unsuccessfully treated" ]
        );
 
 julia> tableone(
            pbcdata,
-           :trt,
-           [ "age", "sex", "hepato", "edemalevel", "bili", "chol", "stage" ];
+           :Trt,
+           [ "Age", "Sex", "Hepato", "Edemalevel", "Bili", "Chol", "Stage" ];
            addnmissing=false,
-           binvars = [ "sex", "hepato" ],
-           catvars = [ "edemalevel", "stage" ],
-           npvars = [ "bili", "chol" ],
+           binvars = [ "Sex", "Hepato" ],
+           catvars = [ "Edemalevel", "Stage" ],
+           npvars = [ "Bili", "Chol" ],
            digits = 2,
-           binvardisplay = Dict("sex" => "f"),
+           binvardisplay = Dict("Sex" => "f"),
            varnames = Dict(
-               "age" => "Age, years",
-               "hepato" => "Hepatomegaly",
-               "bili" => "Bilirubin, mg/dL",
-               "chol" => "Cholesterol, mg/dL"
+               "Age" => "Age, years",
+               "Hepato" => "Hepatomegaly",
+               "Bili" => "Bilirubin, mg/dL",
+               "Chol" => "Cholesterol, mg/dL"
            )
        )
 15×3 DataFrame
@@ -348,15 +346,15 @@ julia> tableone(
 ─────┼───────────────────────────────────────────────────────────────────────────────
    1 │ n                                  158                   154
    2 │ Age, years: mean (sd)              51.42 (11.01)         48.58 (9.96)
-   3 │ sex: f                             137 (86.71)           139 (90.26)
+   3 │ Sex: f                             137 (86.71)           139 (90.26)
    4 │ Hepatomegaly: 1                    73 (46.2)             87 (56.49)
-   5 │ edemalevel
+   5 │ Edemalevel
    6 │     No edema                       132 (83.54)           131 (85.06)
    7 │     Untreated or successfully tr…  16 (10.13)            13 (8.44)
    8 │     Unsuccessfully treated         10 (6.33)             10 (6.49)
    9 │ Bilirubin, mg/dL: median [IQR]     1.4 [0.8–3.2]         1.3 [0.72–3.6]
   10 │ Cholesterol, mg/dL: median [IQR]   315.5 [247.75–417.0]  303.5 [254.25–377.0]
-  11 │ stage
+  11 │ Stage
   12 │     1                              12 (7.59)             4 (2.6)
   13 │     2                              35 (22.15)            32 (20.78)
   14 │     3                              56 (35.44)            64 (41.56)

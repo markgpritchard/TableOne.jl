@@ -2,7 +2,7 @@
 module TableOneCategoricalVariables
 
 using TableOne 
-using CategoricalArrays
+using CategoricalArrays: CategoricalArray, levels
 
 function TableOne._catvariable(
     strata, stratanames, strataids, varvect::CategoricalArray, varname; 

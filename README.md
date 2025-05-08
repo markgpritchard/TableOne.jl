@@ -21,28 +21,25 @@ The only exported function is `tableone`.
 
 We use a publicly available Primary Biliary Cholangitis dataset to create an example Table 1.
 ```julia
-julia> using TableOne, CSV, DataFrames, Downloads
+julia> using TableOne, DataFrames, RDatasets
 
-julia> pbcdata = CSV.read(
-           Downloads.download("http://www-eio.upc.edu/~pau/cms/rdata/csv/survival/pbc.csv"),
-           DataFrame;
-           missingstring="NA");
+julia> pbcdata = dataset("survival", "pbc");
 
 julia> tableone(
            pbcdata,
-           :trt,
-           [ "age", "sex", "hepato", "edema", "bili", "chol", "stage" ];
-           binvars = [ "sex", "hepato" ],
-           catvars = [ "edema", "stage" ],
-           npvars = [ "bili", "chol" ],
+           :Trt,
+           [ "Age", "Sex", "Hepato", "Edema", "Bili", "Chol", "Stage" ];
+           binvars = [ "Sex", "Hepato" ],
+           catvars = [ "Edema", "Stage" ],
+           npvars = [ "Bili", "Chol" ],
            digits = 2,
            pvalues=true,
-           binvardisplay = Dict("sex" => "f"),
+           binvardisplay = Dict("Sex" => "f"),
            varnames = Dict(
-               "age" => "Age, years",
-               "hepato" => "Hepatomegaly",
-               "bili" => "Bilirubin: mg/dL",
-               "chol" => "Cholesterol: mg/dL"
+               "Age" => "Age, years",
+               "Hepato" => "Hepatomegaly",
+               "Bili" => "Bilirubin, mg/dL",
+               "Chol" => "Cholesterol, mg/dL"
            )
        )
 15×5 DataFrame
@@ -51,15 +48,15 @@ julia> tableone(
 ─────┼────────────────────────────────────────────────────────────────────────────────────────────────
    1 │ n                                 158                   154                   106
    2 │ Age, years: mean (sd)             51.42 (11.01)         48.58 (9.96)          0         0.018
-   3 │ sex: f                            137 (86.71)           139 (90.26)           0         0.422
+   3 │ Sex: f                            137 (86.71)           139 (90.26)           0         0.422
    4 │ Hepatomegaly: 1                   73 (46.2)             87 (56.49)            0         0.088
-   5 │ edema                                                                         0         0.877
+   5 │ Edema                                                                         0         0.877
    6 │     0.0                           132 (83.54)           131 (85.06)
    7 │     0.5                           16 (10.13)            13 (8.44)
    8 │     1.0                           10 (6.33)             10 (6.49)
-   9 │ Bilirubin: mg/dL: median [IQR]    1.4 [0.8–3.2]         1.3 [0.72–3.6]        0         0.842
-  10 │ Cholesterol: mg/dL: median [IQR]  315.5 [247.75–417.0]  303.5 [254.25–377.0]  28        0.544
-  11 │ stage                                                                         0         0.201
+   9 │ Bilirubin, mg/dL: median [IQR]    1.4 [0.8–3.2]         1.3 [0.72–3.6]        0         0.842
+  10 │ Cholesterol, mg/dL: median [IQR]  315.5 [247.75–417.0]  303.5 [254.25–377.0]  28        0.544
+  11 │ Stage                                                                         0         0.201
   12 │     1                             12 (7.59)             4 (2.6)
   13 │     2                             35 (22.15)            32 (20.78)
   14 │     3                             56 (35.44)            64 (41.56)
