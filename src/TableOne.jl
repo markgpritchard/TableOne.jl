@@ -6,7 +6,6 @@ using HypothesisTests: ChisqTest, FisherExactTest, KruskalWallisTest, OneWayANOV
 using HypothesisTests: pvalue
 using PackageExtensionCompat: @require_extensions
 using StatsBase: mean, median, quantile, std
-using UnPack: @unpack
 
 export tableone
 
@@ -349,6 +348,7 @@ function _catvariable!(_t::DataFrame, varvect, levels, stratumids, sn, pmatrix, 
         __catvariable!(estimates, varvect, lev, stratumids, pmatrix, i, j; kwargs...)
     end
     insertcols!(_t, Symbol(sn) => estimates)
+    return nothing
 end
 
 function __catvariable!(
@@ -356,10 +356,11 @@ function __catvariable!(
     digits, kwargs...
 ) # note that this function is used for both categorical and binary variables
     # find those with non-missing values (this is our denominator)
-    @unpack n, denom = _catvalues(varvect, level, stratumids)
-    _catvarpmatrix!(pmatrix, n, i, j)
-    pc = 100 * n / denom
-    push!(estimates, "$(sprint(show, n)) ($(sprint(show, round(pc; digits))))")
+    cv = _catvalues(varvect, level, stratumids)
+    _catvarpmatrix!(pmatrix, cv.n, i, j)
+    pc = 100 * cv.n / cv.denom
+    push!(estimates, "$(sprint(show, cv.n)) ($(sprint(show, round(pc; digits))))")
+    return nothing
 end
 
 function _catvalues(varvect, level, stratumids)
@@ -502,20 +503,20 @@ function _cramvariable!(
     _t::DataFrame, varvect, levels, stratumids, sn, pmatrix, i; 
     digits, kwargs...
 ) 
-    @unpack n, denom = _catvalues(varvect, levels[1], stratumids)
-    _catvarpmatrix!(pmatrix, n, i, 1)
-    n1 = deepcopy(n)
-    pc1 = 100 * n1 / denom
-    @unpack n, denom = _catvalues(varvect, levels[2], stratumids)
-    _catvarpmatrix!(pmatrix, n, i, 2)
-    n2 = deepcopy(n)
-    pc2 = 100 * n2 / denom
-    pn1 = "$(sprint(show, n1))"
-    pn2 = "$(sprint(show, n2))"
+    cv1 = _catvalues(varvect, levels[1], stratumids)
+    cv2 = _catvalues(varvect, levels[2], stratumids)
+    @assert cv1.denom == cv2.denom 
+    _catvarpmatrix!(pmatrix, cv1.n, i, 1)
+    _catvarpmatrix!(pmatrix, cv2.n, i, 2)
+    pc1 = 100 * cv1.n / cv1.denom
+    pc2 = 100 * cv2.n / cv2.denom
+    pn1 = "$(sprint(show, cv1.n))"
+    pn2 = "$(sprint(show, cv2.n))"
     ppc1 = "$(sprint(show, round(pc1; digits)))"
     ppc2 = "$(sprint(show, round(pc2; digits)))"
     estimates = [ "$pn1/$pn2 ($ppc1/$ppc2)" ]
     insertcols!(_t, Symbol(sn) => estimates)
+    return nothing
 end
 
 function _autovariable(
@@ -609,8 +610,8 @@ _contpvectors!(pvectors::Vector, newvect) = push!(pvectors, newvect)
 _addcatpvalue!(::Any, ::Nothing; kwargs...) = nothing
 
 function _addcatpvalue!(_t, pmatrix::Matrix{<:Integer}; kwargs...)
-    @unpack p, testname = _catpvalue(pmatrix)
-    _addpvalue!(_t, p, testname; kwargs...)
+    cp = _catpvalue(pmatrix)
+    _addpvalue!(_t, cp.p, cp.testname; kwargs...)
 end
 
 _addbinpvalue!(::Any, ::Nothing, ::Any, ::Any, ::Any, ::Any; kwargs...) = nothing
@@ -621,11 +622,12 @@ function _addbinpvalue!(
 )
     for (i, sn) ∈ enumerate(stratanames) 
         stratumids = strataids[Symbol(sn)]
-        @unpack n, denom = _catvalues(varvect, level, stratumids)
-        pmatrix[2, i] = denom - n
+        cv = _catvalues(varvect, level, stratumids)
+        pmatrix[2, i] = cv.denom - cv.n
     end
-    @unpack p, testname = _catpvalue(pmatrix)
-    _addpvalue!(_t, p, testname; kwargs...)
+    cp = _catpvalue(pmatrix)
+    _addpvalue!(_t, cp.p, cp.testname; kwargs...)
+    return nothing
 end
 
 _addcontpvalue!(::Any, ::Any, ::Nothing; kwargs...) = nothing
