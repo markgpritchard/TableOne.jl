@@ -8,4 +8,6 @@ TableOne = "d36ae967-72a8-4ff4-a661-f51e671fe83a"
 
 [compat]
 Documenter = "1.2"
+RDatasets = "0.7"
+StableRNGs = "1"
 julia = "1.6"
